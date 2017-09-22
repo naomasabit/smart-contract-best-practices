@@ -1,53 +1,67 @@
-# Ethereum Contract Security Techniques and Tips
+# Ethereum Contract セキュリティ・テクニック＆Tips
+
+このドキュメントは
+[ConsenSys/smart-contract-best-practices](https://github.com/ConsenSys/smart-contract-best-practices)
+を日本語訳したものです。
 
 [![Join the chat at https://gitter.im/ConsenSys/smart-contract-best-practices](https://badges.gitter.im/ConsenSys/smart-contract-best-practices.svg)](https://gitter.im/ConsenSys/smart-contract-best-practices?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 
+目次:
 
-Main sections are:
-
-- [**Solidity Security Tips**](#solidity-tips)
-- [**Known Attacks**](#known-attacks)
+- [**Solidity セキュリティTips**](#solidity-tips)
+- [**既知の攻撃手法**](#known-attacks)
   - [***Race Conditions***](#race-conditions)
     - [Reentrancy](#reentrancy)
     - [Transaction Ordering Dependence](#transaction-ordering-dependence)
   - [***Gas Related Attacks***](#dos-with-block-gas-limit)
   - [***Overflow/Underflow***](#integer-overflow-and-underflow)
-- [**Engineering Techniques**](#eng-techniques)
-- [**Bibliography**](#bibliography)
+- [**エンジニアリング・テクニック**](#eng-techniques)
+- [**参考ドキュメント**](#bibliography)
 
-This document is designed to provide a starting *security* baseline for intermediate Solidity programmers.  It additionally includes *security philosophies; bug bounty program guidelines; documentation and procedures; and tools.*
+このドキュメントは中堅Solidityプログラマにセキュリティの基礎を伝えるために作られています。  
+プルリクエストは大歓迎です。
+小さな修正からセクションの追加、あるいは記事やブログを書いた場合は
+[参考ドキュメント](#bibliography)に追加してください。  
+詳しくは[Contribution Guidelines](CONTRIBUTING.md)を確認してください。  
+(注: 内容の追加などは
+[翻訳元](https://github.com/ConsenSys/smart-contract-best-practices)
+へプルリクエストを投げてください)
 
-Pull requests are very welcome, from small fixes, to sections, and if you've written an article or blog post, please add it to the [bibliography.](#bibliography)  See our [Contribution Guidelines](CONTRIBUTING.md).
+#### 特に歓迎する項目
 
-#### Additional Requested Content
+以下の領域のコンテンツは特に歓迎します:
 
-We especially welcome content in the following areas:
+- Solidityコードのテスト
+- スマートコントラクトやブロックチェーンベースのプログラミングの、ソフトウェア開発チュートリアル
 
-- Testing Solidity code (structure, frameworks, common test idioms)
-- Software engineering practices for smart contracts and/or blockchain-based programming
+## 一般的な知識
 
-## General Philosophy
+Ethereumや複雑なブロックチェーンのプログラムは歴史が浅く、極めて実験的な段階です。  
+したがって新しいバグやセキュリティ上のリスクが発見されたり、
+新しいベストプラクティスが開発されるなど、セキュリティの領域は常に変化してゆくと認識する必要があります。    
 
-Ethereum and complex blockchain programs are new and highly experimental. Therefore, you should expect constant changes in the security landscape, as new bugs and security risks are discovered, and new best practices are developed. Following the security practices in this document is therefore only the beginning of the security work you will need to do as a smart contract developer.
+スマートコントラクトのプログラミングには、あなたの今までの経験とは全く異なるマインドセットが必要です。  
+1つのミスが多大な損害を与え、かつその修正は困難な場合があります。
+これはWEB開発よりも、むしろ組み込み開発や金融系の開発によく似ています。
+既知の脆弱性に備えるだけでは不充分であり、
+新しい開発手法を身につける必要があります。
 
-Smart contract programming requires a different engineering mindset than you may be used to. The cost of failure can be high, and change can be difficult, making it in some ways more similar to hardware programming or financial services programming than web or mobile development. It is therefore not enough to defend against known vulnerabilities. Instead, you will need to learn a new philosophy of development:
+- **危機に備える**. ある程度の規模のContractであれば何らかの不具合を含みます。そのため、バグや脆弱性が発見された際にしっかりと対応できるコードを書く必要があります。
+  - 危機的な状況が発生したらContractを一時停止する("サーキットブレーカー")
+  - 危機に備えて資金量を管理する (レート制限, 上限量)
+  - バグFIXや改善のためにアップグレード方法を準備する
 
-- **Prepare for failure**. Any non-trivial contract will have errors in it. Your code must therefore be able to respond to bugs and vulnerabilities gracefully.
-  - Pause the contract when things are going wrong ('circuit breaker')
-  - Manage the amount of money at risk (rate limiting, maximum usage)
-  - Have an effective upgrade path for bugfixes and improvements
+- [**慎重に運用開始する**.](#contract-rollout) バグを本番環境リリース前に潰しておくことは最善の打ち手です。 
+  - Contractを徹底的にテストし、新しい攻撃手法へのテストを常に追加してゆく。
+  - [バグ報奨金制度](#bounties) をテストネットでのアルファリリースから提供する。
+  - 段階的に運用開始し、すべてのフェーズでテストとユーザを増やす
 
-- [**Rollout carefully**.](#contract-rollout) It is always better to catch bugs before a full production release.
-  - Test contracts thoroughly, and add tests whenever new attack vectors are discovered
-  - Provide [bug bounties](#bounties) starting from alpha testnet releases
-  - Rollout in phases, with increasing usage and testing in each phase
-
-- **Keep contracts simple**. Complexity increases the likelihood of errors.
-  - Ensure the contract logic is simple
-  - Modularize code to keep contracts and functions small
-  - Use already-written tools or code where possible (eg. don't roll your own random number generator)
-  - Prefer clarity to performance whenever possible
-  - Only use the blockchain for the parts of your system that require decentralization
+- **Contractをシンプルに保つ**. 複雑さは不具合の可能性を高めます。
+  - Contractのロジックがシンプルであることを担保する
+  - Contractと関数を小さく保つためにモジュラー化する
+  - 可能な限り既存のツールやコードを使用する (例. ランダム数を取得する処理を書かない)
+  - 処理は可能な限りわかりやすく書く
+  - ブロックチェーンは、システムで非中央集権性が求められる部分にだけ適用する
 
 - **Stay up to date**. Use the resources listed in the next section to keep track of new security developments.
   - Check your contracts for any new bug that's discovered
@@ -68,13 +82,13 @@ An ideal smart contract system from a software engineering bias is modular, reus
 
 However, there are important exceptions where security and software engineering best practices may not be aligned.  In each case, the proper balance is obtained by identifying the optimal mix of properties along contract system dimensions such as:
 
-- Rigid versus Upgradeable 
+- Rigid versus Upgradeable
 - Monolithic versus Modular
 - Duplication versus Reuse
 
 #### Rigid versus Upgradeable
 
-While multiple resources, including this one, emphasize malleability characteristics such as Killable, Upgradeable or Modifiable patterns there is a *fundamental tradeoff* between malleability and security.  
+While multiple resources, including this one, emphasize malleability characteristics such as Killable, Upgradeable or Modifiable patterns there is a *fundamental tradeoff* between malleability and security.
 
 Malleability patterns by definition add complexity and potential attack surfaces.  Simplicity is particularly effective over complexity in cases where the smart contract system performs a very limited set of functionality for a pre-defined limited period of time, for example a governance-free finite-time-frame token-sale contract system.
 
@@ -133,7 +147,7 @@ Calls to untrusted contracts can introduce several unexpected risks or errors. E
 When sending Ether be aware of the relative tradeoffs between the use of
 `someAddress.send()`, `someAddress.transfer()`, and `someAddress.call.value()()`.
 
-- `x.transfer(y)` is equivalent to `if (!x.send(y)) throw;` Send is the low level counterpart of transfer, and it's advisable to use      transfer when possible.
+- `x.transfer(y)` is equivalent to `require(x.send(y));` Send is the low level counterpart of transfer, and it's advisable to use transfer when possible.
 - `someAddress.send()`and `someAddress.transfer()` are considered *safe* against [reentrancy](#reentrancy).
     While these methods still trigger code execution, the called contract is
     only given a stipend of 2,300 gas which is currently only enough to log an
@@ -144,7 +158,7 @@ When sending Ether be aware of the relative tradeoffs between the use of
 
 Using `send()` or `transfer()` will prevent reentrancy but it does so at the cost of being
 incompatible with any contract whose fallback function requires more than 2,300
-gas.  
+gas.
 
 One pattern that attempts to balance this trade-off is to implement both
 a [*push* and *pull*](#favor-pull-over-push-payments) mechanism, using `send()` or `transfer()`
@@ -196,12 +210,10 @@ contract auction {
     uint highestBid;
 
     function bid() payable {
-        if (msg.value < highestBid) throw;
+        require(msg.value >= highestBid);
 
         if (highestBidder != 0) {
-            if (!highestBidder.send(highestBid)) { // if this call consistently fails, no one else can bid
-                throw;
-            }
+            require(highestBidder.send(highestBid)) // if this call consistently fails, no one else can bid
         }
 
        highestBidder = msg.sender;
@@ -216,7 +228,7 @@ contract auction {
     mapping(address => uint) refunds;
 
     function bid() payable external {
-        if (msg.value < highestBid) throw;
+        require(msg.value >= highestBid);
 
         if (highestBidder != 0) {
             refunds[highestBidder] += highestBid; // record the refund that this user can claim
@@ -229,8 +241,7 @@ contract auction {
     function withdrawRefund() external {
         uint refund = refunds[msg.sender];
         refunds[msg.sender] = 0;
-        if (!msg.sender.send(refund)) {
-            refunds[msg.sender] = refund; // reverting state because send failed
+        require(msg.sender.send(refund)); // revert state if send fails
         }
     }
 }
@@ -265,38 +276,17 @@ function makeUntrustedWithdrawal(uint amount) {
 
 An assert guard triggers when an assertion fails - such as an invariant property changing. For example, the token to ether issuance ratio, in a token issuance contract, may be fixed. You can verify that this is the case at all times with an `assert()`. Assert guards should often be combined with other techniques, such as pausing the contract and allowing upgrades. (Otherwise you may end up stuck, with an assertion that is always failing.)
 
-The following example reverts transactions if the ratio of ether to total number of tokens changes:
+Example:
 
 ```
-contract TokenWithInvariants {
+contract Token {
     mapping(address => uint) public balanceOf;
     uint public totalSupply;
 
-    modifier checkInvariants {
-        _;
-        assert(this.balance >= totalSupply);
-    }
-
-    function deposit() public payable checkInvariants {
-        // intentionally vulnerable
+    function deposit() public payable {
         balanceOf[msg.sender] += msg.value;
         totalSupply += msg.value;
-    }
-
-    function transfer(address to, uint value) public checkInvariants {
-        if (balanceOf[msg.sender] >= value) {
-            balanceOf[to] += value;
-            balanceOf[msg.sender] -= value;
-        }
-    }
-
-    function withdraw() public checkInvariants {
-        // intentionally vulnerable
-        uint balance = balanceOf[msg.sender];
-        if (msg.sender.call.value(balance)()) {
-            totalSupply -= balance;
-            balanceOf[msg.sender] = 0;
-        }
+        assert(this.balance >= totalSupply);
     }
 }
 ```
@@ -306,13 +296,13 @@ Note that the assertion is *not* a strict equality of the balance because the co
 
 ### Use `assert()` and `require()` properly
 
-In Solidity 0.4.10 `assert()` and `require()` were introduced. `require(condition)` is meant to be used for input validation, which should be done on any user input, and throws if condition is false. `assert(condition)` also throws if condition is false but should be used only for invariants: internal errors or to check if your contract has reached an invalid state. Following this paradigm allows formal analysis tools to verify that the invalid opcode can never be reached: meaning no invariants in the code are violated and that the code is formally verified.
+In Solidity 0.4.10 `assert()` and `require()` were introduced. `require(condition)` is meant to be used for input validation, which should be done on any user input, and reverts if condition is false. `assert(condition)` also reverts if condition is false but should be used only for invariants: internal errors or to check if your contract has reached an invalid state. Following this paradigm allows formal analysis tools to verify that the invalid opcode can never be reached: meaning no invariants in the code are violated and that the code is formally verified.
 
 <a name="beware-rounding-with-integer-division"></a>
 
 ### Beware rounding with integer division
 
-All integer divison rounds down to the nearest integer. If you need more precision, consider using a multiplier, or store both the numerator and denominator.
+All integer division rounds down to the nearest integer. If you need more precision, consider using a multiplier, or store both the numerator and denominator.
 
 (In the future, Solidity will have a fixed-point type, which will make this easier.)
 
@@ -334,7 +324,7 @@ uint denominator = 2;
 
 Beware of coding an invariant that strictly checks the balance of a contract.
 
-An attacker can forcibly send wei to any account and this cannot be prevented (not even with a fallback function that does a `throw`).
+An attacker can forcibly send wei to any account and this cannot be prevented (not even with a fallback function that does a `revert()`).
 
 The attacker can do this by creating a contract, funding it with 1 wei, and invoking
 `selfdestruct(victimAddress)`.  No code is invoked in `victimAddress`, so it
@@ -357,7 +347,7 @@ Examples:
 
 ### Be aware of the tradeoffs between abstract contracts and interfaces
 
-Both interfaces and abstract contracts provide one with a customizable and re-usable approach for smart contracts. Interfaces, which were introduced in Solidity 0.4.11, are similar to abstract contracts but cannot have any functions implemented. Interfaces also have limitations such as not being able to access storage or inherit from other interfaces which generally makes abstract contracts more practical. Although, Interfaces are certainly useful for designing contracts prior to implementation. Additionally, it is important to keep in mind that if a contract inherits from an abstract contract it must implement all non-implemented functions via overriding or it will be abstract as well. 
+Both interfaces and abstract contracts provide one with a customizable and re-usable approach for smart contracts. Interfaces, which were introduced in Solidity 0.4.11, are similar to abstract contracts but cannot have any functions implemented. Interfaces also have limitations such as not being able to access storage or inherit from other interfaces which generally makes abstract contracts more practical. Although, Interfaces are certainly useful for designing contracts prior to implementation. Additionally, it is important to keep in mind that if a contract inherits from an abstract contract it must implement all non-implemented functions via overriding or it will be abstract as well.
 
 ### In 2-party or N-party contracts, beware of the possibility that some participants may "drop offline" and not return
 
@@ -452,7 +442,7 @@ Prefer constructs/aliases such as `selfdestruct` (over `suicide`) and `keccak256
 
 <a name="known-attacks"></a>
 
-## Known Attacks
+## 既知の攻撃手法
 
 <a name="race-conditions"></a>
 
@@ -472,7 +462,7 @@ mapping (address => uint) private userBalances;
 
 function withdrawBalance() public {
     uint amountToWithdraw = userBalances[msg.sender];
-    if (!(msg.sender.call.value(amountToWithdraw)())) { throw; } // At this point, the caller's code is executed, and can call withdrawBalance again
+    require(msg.sender.call.value(amountToWithdraw)()); // At this point, the caller's code is executed, and can call withdrawBalance again
     userBalances[msg.sender] = 0;
 }
 ```
@@ -489,7 +479,7 @@ mapping (address => uint) private userBalances;
 function withdrawBalance() public {
     uint amountToWithdraw = userBalances[msg.sender];
     userBalances[msg.sender] = 0;
-    if (!(msg.sender.call.value(amountToWithdraw)())) { throw; } // The user's balance is already 0, so future invocations won't withdraw anything
+    require(msg.sender.call.value(amountToWithdraw)()); // The user's balance is already 0, so future invocations won't withdraw anything
 }
 ```
 
@@ -512,7 +502,7 @@ function transfer(address to, uint amount) {
 
 function withdrawBalance() public {
     uint amountToWithdraw = userBalances[msg.sender];
-    if (!(msg.sender.call.value(amountToWithdraw)())) { throw; } // At this point, the caller's code is executed, and can call transfer()
+    require(msg.sender.call.value(amountToWithdraw)()); // At this point, the caller's code is executed, and can call transfer()
     userBalances[msg.sender] = 0;
 }
 ```
@@ -536,11 +526,11 @@ mapping (address => uint) private rewardsForA;
 function withdraw(address recipient) public {
     uint amountToWithdraw = userBalances[recipient];
     rewardsForA[recipient] = 0;
-    if (!(recipient.call.value(amountToWithdraw)())) { throw; }
+    require(recipient.call.value(amountToWithdraw)());
 }
 
 function getFirstWithdrawalBonus(address recipient) public {
-    if (claimedBonus[recipient]) { throw; } // Each recipient should only be able to claim the bonus once
+    require(!claimedBonus[recipient]); // Each recipient should only be able to claim the bonus once
 
     rewardsForA[recipient] += 100;
     withdraw(recipient); // At this point, the caller will be able to execute getFirstWithdrawalBonus again.
@@ -558,11 +548,11 @@ mapping (address => uint) private rewardsForA;
 function untrustedWithdraw(address recipient) public {
     uint amountToWithdraw = userBalances[recipient];
     rewardsForA[recipient] = 0;
-    if (!(recipient.call.value(amountToWithdraw)())) { throw; }
+    require(recipient.call.value(amountToWithdraw)());
 }
 
 function untrustedGetFirstWithdrawalBonus(address recipient) public {
-    if (claimedBonus[recipient]) { throw; } // Each recipient should only be able to claim the bonus once
+    require(claimedBonus[recipient]); // Each recipient should only be able to claim the bonus once
 
     claimedBonus[recipient] = true;
     rewardsForA[recipient] += 100;
@@ -586,7 +576,7 @@ function deposit() payable public returns (bool) {
         lockBalances = false;
         return true;
     }
-    throw;
+    revert();
 }
 
 function withdraw(uint amount) payable public returns (bool) {
@@ -601,7 +591,7 @@ function withdraw(uint amount) payable public returns (bool) {
         return true;
     }
 
-    throw;
+    revert();
 }
 ```
 
@@ -614,7 +604,7 @@ contract StateHolder {
     address private lockHolder;
 
     function getLock() {
-        if (lockHolder != 0) { throw; }
+        require(lockHolder == 0);
         lockHolder = msg.sender;
     }
 
@@ -623,7 +613,7 @@ contract StateHolder {
     }
 
     function set(uint newState) {
-        if (msg.sender != lockHolder) { throw; }
+        require(msg.sender == lockHolder);
         n = newState;
     }
 }
@@ -639,7 +629,7 @@ An attacker can call `getLock()`, and then never call `releaseLock()`. If they d
 
 ### Transaction-Ordering Dependence (TOD) / Front Running
 
-Above were examples of race conditions involving the attacker executing malicious code *within a single transaction*. The following are a different type of race condition inherent to Blockchains: the fact that *the order of transactions themselves* (within a block) is easily subject to manipulation. 
+Above were examples of race conditions involving the attacker executing malicious code *within a single transaction*. The following are a different type of race condition inherent to Blockchains: the fact that *the order of transactions themselves* (within a block) is easily subject to manipulation.
 
 Since a transaction is in the mempool for a short while, one can know what actions will occur, before it is included in a block. This can be troublesome for things like decentralized markets, where a transaction to buy some tokens can be seen, and a market order implemented before the other transaction gets included. Protecting against this is difficult, as it would come down to the specific contract itself. For example, in markets, it would be better to implement batch auctions (this also protects against high frequency trading concerns). Another way to use a pre-commit scheme (“I’m going to submit the details later”).
 
@@ -675,8 +665,7 @@ mapping (address => uint256) public balanceOf;
 // INSECURE
 function transfer(address _to, uint256 _value) {
     /* Check if sender has balance */
-    if (balanceOf[msg.sender] < _value)
-        throw;
+    require(balanceOf[msg.sender] > _value);
     /* Add and subtract new balances */
     balanceOf[msg.sender] -= _value;
     balanceOf[_to] += _value;
@@ -685,8 +674,7 @@ function transfer(address _to, uint256 _value) {
 // SECURE
 function transfer(address _to, uint256 _value) {
     /* Check if sender has balance and for overflows */
-    if (balanceOf[msg.sender] < _value || balanceOf[_to] + _value < balanceOf[_to])
-        throw;
+    require(balanceOf[msg.sender] >= _value && balanceOf[_to] + _value >= balanceOf[_to]);
 
     /* Add and subtract new balances */
     balanceOf[msg.sender] -= _value;
@@ -696,15 +684,15 @@ function transfer(address _to, uint256 _value) {
 
 If a balance reaches the maximum uint value (2^256) it will circle back to zero. This checks for that condition. This may or may not be relevant, depending on the implementation. Think about whether or not the uint value has an opportunity to approach such a large number. Think about how the uint variable changes state, and who has authority to make such changes. If any user can call functions which update the uint value, it's more vulnerable to attack. If only an admin has access to change the variable's state, you might be safe. If a user can increment by only 1 at a time, you are probably also safe because there is no feasible way to reach this limit.
 
-The same is true for underflow. If a uint is made to be less than zero, it will cause an underflow and get set to its maximum value. 
+The same is true for underflow. If a uint is made to be less than zero, it will cause an underflow and get set to its maximum value.
 
 Be careful with the smaller data-types like uint8, uint16, uint24...etc: they can even more easily hit their maximum value.
 
 Be aware there are around [20 cases for overflow and underflow](https://github.com/ethereum/solidity/issues/796#issuecomment-253578925).
 
-<a name="dos-with-unexpected-throw"></a>
+<a name="dos-with-unexpected-revert"></a>
 
-### DoS with (Unexpected) Throw
+### DoS with (Unexpected) revert
 
 Consider a simple auction contract:
 
@@ -715,9 +703,9 @@ contract Auction {
     uint highestBid;
 
     function bid() payable {
-        if (msg.value <= highestBid) { throw; }
+        require(msg.value > highestBid);
 
-        if (!currentLeader.send(highestBid)) { throw; } // Refund the old leader, and throw if it fails
+        require(currentLeader.send(highestBid)); // Refund the old leader, if it fails then revert
 
         currentLeader = msg.sender;
         highestBid = msg.value;
@@ -725,9 +713,9 @@ contract Auction {
 }
 ```
 
-When it tries to refund the old leader, it throws if the refund fails. This means that a malicious bidder can become the leader, while making sure that any refunds to their address will *always* fail. In this way, they can prevent anyone else from calling the `bid()` function, and stay the leader forever. A recommendation is to set up a [pull payment system](https://github.com/ConsenSys/smart-contract-best-practices/#favor-pull-over-push-payments) instead, as described earlier.
+When it tries to refund the old leader, it reverts if the refund fails. This means that a malicious bidder can become the leader, while making sure that any refunds to their address will *always* fail. In this way, they can prevent anyone else from calling the `bid()` function, and stay the leader forever. A recommendation is to set up a [pull payment system](https://github.com/ConsenSys/smart-contract-best-practices/#favor-pull-over-push-payments) instead, as described earlier.
 
-Another example is when a contract may iterate through an array to pay users (e.g., supporters in a crowdfunding contract). It's common to want to make sure that each payment succeeds. If not, one should throw. The issue is that if one call fails, you are reverting the whole payout system, meaning the loop will never complete. No one gets paid, because one address is forcing an error.
+Another example is when a contract may iterate through an array to pay users (e.g., supporters in a crowdfunding contract). It's common to want to make sure that each payment succeeds. If not, one should revert. The issue is that if one call fails, you are reverting the whole payout system, meaning the loop will never complete. No one gets paid, because one address is forcing an error.
 
 
 ```
@@ -737,9 +725,7 @@ mapping (address => uint) public refunds;
 // bad
 function refundAll() public {
     for(uint x; x < refundAddresses.length; x++) { // arbitrary length iteration based on how many addresses participated
-        if(refundAddresses[x].send(refunds[refundAddresses[x]])) {
-            throw; // doubly bad, now a single failure on send will hold up all funds
-        }
+        require(refundAddresses[x].send(refunds[refundAddresses[x]])) // doubly bad, now a single failure on send will hold up all funds
     }
 }
 ```
@@ -819,9 +805,7 @@ contract SomeRegister {
     }
 
     modifier onlyOwner() {
-        if (msg.sender != owner) {
-            throw;
-        }
+        require(msg.sender == owner)
         _;
     }
 
@@ -855,9 +839,7 @@ contract Relay {
     address public owner;
 
     modifier onlyOwner() {
-        if (msg.sender != owner) {
-            throw;
-        }
+        require(msg.sender == owner);
         _;
     }
 
@@ -873,7 +855,7 @@ contract Relay {
     }
 
     function() {
-        if(!currentVersion.delegatecall(msg.data)) throw;
+        require(currentVersion.delegatecall(msg.data));
     }
 }
 ```
@@ -893,9 +875,7 @@ bool private stopped = false;
 address private owner;
 
 modifier isAdmin() {
-    if(msg.sender != owner) {
-        throw;
-    }
+    require(msg.sender == owner);
     _;
 }
 
@@ -953,9 +933,7 @@ function withdraw() public {
         uint amountToWithdraw = requestedWithdrawals[msg.sender].amount;
         requestedWithdrawals[msg.sender].amount = 0;
 
-        if(!msg.sender.send(amountToWithdraw)) {
-            throw;
-        }
+        require(msg.sender.send(amountToWithdraw));
     }
 }
 ```
@@ -986,9 +964,7 @@ During testing, you can force an automatic deprecation by preventing any actions
 
 ```
 modifier isActive() {
-    if (block.number > SOME_BLOCK_NUMBER) {
-        throw;
-    }
+    require(block.number <= SOME_BLOCK_NUMBER);
     _;
 }
 
@@ -1079,13 +1055,17 @@ When launching a contract that will have substantial funds or is required to be 
 
 ## Security Tools
 
-- [Oyente](https://github.com/ethereum/oyente) - Analyze Ethereum code to find common vulnerabilities, based on this [paper](http://www.comp.nus.edu.sg/~loiluu/papers/oyente.pdf).
-
-- [SolCover](https://github.com/JoinColony/solcover) - Code coverage for Solidity testing.
-
+- [Oyente](https://github.com/melonproject/oyente) - Analyze Ethereum code to find common vulnerabilities, based on this [paper](http://www.comp.nus.edu.sg/~loiluu/papers/oyente.pdf).
+- [solidity-coverage](https://github.com/sc-forks/solidity-coverage) - Code coverage for Solidity testing.
 - [Solgraph](https://github.com/raineorshine/solgraph) - Generates a DOT graph that visualizes function control flow of a Solidity contract and highlights potential security vulnerabilities.
 
-- [solint](https://github.com/weifund/solint) - Solidity linting that helps you enforce consistent conventions and avoid errors in your Solidity smart-contracts.
+## Linters
+
+Linters improve code quality by enforcing rules for style and composition, making code easier to read and review.
+
+- [Solium](https://github.com/duaraghav8/Solium) - Yet another Solidity linting.
+- [Solint](https://github.com/weifund/solint) - Solidity linting that helps you enforce consistent conventions and avoid errors in your Solidity smart-contracts.
+- [Solcheck](https://github.com/federicobond/solcheck) - A linter for Solidity code written in JS and heavily inspired by eslint.
 
 
 
