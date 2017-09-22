@@ -1,52 +1,67 @@
-# Ethereum Contract Security Techniques and Tips
+# Ethereum Contract セキュリティ・テクニック＆Tips
+
+このドキュメントは
+[ConsenSys/smart-contract-best-practices](https://github.com/ConsenSys/smart-contract-best-practices)
+を日本語訳したものです。
 
 [![Join the chat at https://gitter.im/ConsenSys/smart-contract-best-practices](https://badges.gitter.im/ConsenSys/smart-contract-best-practices.svg)](https://gitter.im/ConsenSys/smart-contract-best-practices?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 
-Main sections are:
+目次:
 
-- [**Solidity Security Tips**](#solidity-tips)
-- [**Known Attacks**](#known-attacks)
+- [**Solidity セキュリティTips**](#solidity-tips)
+- [**既知の攻撃手法**](#known-attacks)
   - [***Race Conditions***](#race-conditions)
     - [Reentrancy](#reentrancy)
     - [Transaction Ordering Dependence](#transaction-ordering-dependence)
   - [***Gas Related Attacks***](#dos-with-block-gas-limit)
   - [***Overflow/Underflow***](#integer-overflow-and-underflow)
-- [**Engineering Techniques**](#eng-techniques)
-- [**Bibliography**](#bibliography)
+- [**エンジニアリング・テクニック**](#eng-techniques)
+- [**参考ドキュメント**](#bibliography)
 
-This document is designed to provide a starting *security* baseline for intermediate Solidity programmers.  It additionally includes *security philosophies; bug bounty program guidelines; documentation and procedures; and tools.*
+このドキュメントは中堅Solidityプログラマにセキュリティの基礎を伝えるために作られています。  
+プルリクエストは大歓迎です。
+小さな修正からセクションの追加、あるいは記事やブログを書いた場合は
+[参考ドキュメント](#bibliography)に追加してください。  
+詳しくは[Contribution Guidelines](CONTRIBUTING.md)を確認してください。  
+(注: 内容の追加などは
+[翻訳元](https://github.com/ConsenSys/smart-contract-best-practices)
+へプルリクエストを投げてください)
 
-Pull requests are very welcome, from small fixes, to sections, and if you've written an article or blog post, please add it to the [bibliography.](#bibliography)  See our [Contribution Guidelines](CONTRIBUTING.md).
+#### 特に歓迎する項目
 
-#### Additional Requested Content
+以下の領域のコンテンツは特に歓迎します:
 
-We especially welcome content in the following areas:
+- Solidityコードのテスト
+- スマートコントラクトやブロックチェーンベースのプログラミングの、ソフトウェア開発チュートリアル
 
-- Testing Solidity code (structure, frameworks, common test idioms)
-- Software engineering practices for smart contracts and/or blockchain-based programming
+## 一般的な知識
 
-## General Philosophy
+Ethereumや複雑なブロックチェーンのプログラムは歴史が浅く、極めて実験的な段階です。  
+したがって新しいバグやセキュリティ上のリスクが発見されたり、
+新しいベストプラクティスが開発されるなど、セキュリティの領域は常に変化してゆくと認識する必要があります。    
 
-Ethereum and complex blockchain programs are new and highly experimental. Therefore, you should expect constant changes in the security landscape, as new bugs and security risks are discovered, and new best practices are developed. Following the security practices in this document is therefore only the beginning of the security work you will need to do as a smart contract developer.
+スマートコントラクトのプログラミングには、あなたの今までの経験とは全く異なるマインドセットが必要です。  
+1つのミスが多大な損害を与え、かつその修正は困難な場合があります。
+これはWEB開発よりも、むしろ組み込み開発や金融系の開発によく似ています。
+既知の脆弱性に備えるだけでは不充分であり、
+新しい開発手法を身につける必要があります。
 
-Smart contract programming requires a different engineering mindset than you may be used to. The cost of failure can be high, and change can be difficult, making it in some ways more similar to hardware programming or financial services programming than web or mobile development. It is therefore not enough to defend against known vulnerabilities. Instead, you will need to learn a new philosophy of development:
+- **危機に備える**. ある程度の規模のContractであれば何らかの不具合を含みます。そのため、バグや脆弱性が発見された際にしっかりと対応できるコードを書く必要があります。
+  - 危機的な状況が発生したらContractを一時停止する("サーキットブレーカー")
+  - 危機に備えて資金量を管理する (レート制限, 上限量)
+  - バグFIXや改善のためにアップグレード方法を準備する
 
-- **Prepare for failure**. Any non-trivial contract will have errors in it. Your code must therefore be able to respond to bugs and vulnerabilities gracefully.
-  - Pause the contract when things are going wrong ('circuit breaker')
-  - Manage the amount of money at risk (rate limiting, maximum usage)
-  - Have an effective upgrade path for bugfixes and improvements
+- [**慎重に運用開始する**.](#contract-rollout) バグを本番環境リリース前に潰しておくことは最善の打ち手です。 
+  - Contractを徹底的にテストし、新しい攻撃手法へのテストを常に追加してゆく。
+  - [バグ報奨金制度](#bounties) をテストネットでのアルファリリースから提供する。
+  - 段階的に運用開始し、すべてのフェーズでテストとユーザを増やす
 
-- [**Rollout carefully**.](#contract-rollout) It is always better to catch bugs before a full production release.
-  - Test contracts thoroughly, and add tests whenever new attack vectors are discovered
-  - Provide [bug bounties](#bounties) starting from alpha testnet releases
-  - Rollout in phases, with increasing usage and testing in each phase
-
-- **Keep contracts simple**. Complexity increases the likelihood of errors.
-  - Ensure the contract logic is simple
-  - Modularize code to keep contracts and functions small
-  - Use already-written tools or code where possible (eg. don't roll your own random number generator)
-  - Prefer clarity to performance whenever possible
-  - Only use the blockchain for the parts of your system that require decentralization
+- **Contractをシンプルに保つ**. 複雑さは不具合の可能性を高めます。
+  - Contractのロジックがシンプルであることを担保する
+  - Contractと関数を小さく保つためにモジュラー化する
+  - 可能な限り既存のツールやコードを使用する (例. ランダム数を取得する処理を書かない)
+  - 処理は可能な限りわかりやすく書く
+  - ブロックチェーンは、システムで非中央集権性が求められる部分にだけ適用する
 
 - **Stay up to date**. Use the resources listed in the next section to keep track of new security developments.
   - Check your contracts for any new bug that's discovered
@@ -427,7 +442,7 @@ Prefer constructs/aliases such as `selfdestruct` (over `suicide`) and `keccak256
 
 <a name="known-attacks"></a>
 
-## Known Attacks
+## 既知の攻撃手法
 
 <a name="race-conditions"></a>
 
