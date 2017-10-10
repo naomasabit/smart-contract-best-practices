@@ -63,14 +63,15 @@ Ethereumや複雑なブロックチェーンのプログラムは歴史が浅く
   - 処理は可能な限りわかりやすく書く
   - ブロックチェーンは、システムで非中央集権性が求められる部分にだけ適用する
 
-- **Stay up to date**. Use the resources listed in the next section to keep track of new security developments.
-  - Check your contracts for any new bug that's discovered
-  - Upgrade to the latest version of any tool or library as soon as possible
-  - Adopt new security techniques that appear useful
+- **常に最新の情報を追う**. 新しいセキュリティ情報を追うために、次のセクションにまとめた一覧を活用してください。
+  - あなたのcontractに新しく発見されたバグが含まれないか確認する
+  - 可及的速やかに全てのツールやライブラリを最新バージョンへ更新する
+  - 有用と思われる新しいセキュリティ対策を採用する
 
-- **Be aware of blockchain properties**. While much of your programming experience will be relevant to Ethereum programming, there are some pitfalls to be aware of.
-  - Be extremely careful about external contract calls, which may execute malicious code and change control flow.
-  - Understand that your public functions are public, and may be called maliciously. Your private data is also viewable by anyone.
+- **ブロックチェーンの特性に注意する**. あなたのプログラミング経験の多くはEthereumの開発にも通用しますが、いくつか注意すべき罠があります。
+  - 外部のcontractをコールする場合は特に注意してください。悪意あるコードが実行され制御フローが変更される可能性があります。
+  - Publicな関数がPublicであることをきちんと理解してください。悪意を持って実行される可能性があります。またPrivateなデータであっても、誰からも参照されうることを認識してください。
+  - gasのコストと、ブロックのgas limitに注意してください。
   - Keep gas costs and the block gas limit in mind.
 
 ### Fundamental Tradeoffs: Simplicity versus Complexity cases
