@@ -51,7 +51,7 @@ Ethereumや複雑なブロックチェーンのプログラムは歴史が浅く
   - 危機に備えて資金量を管理する (レート制限, 上限量)
   - バグFIXや改善のためにアップグレード方法を準備する
 
-- [**慎重に運用開始する**.](#contract-rollout) バグを本番環境リリース前に潰しておくことは最善の打ち手です。 
+- [**慎重に運用開始する**.](#contract-rollout) バグを本番環境リリース前に潰しておくことは最善の打ち手です。
   - Contractを徹底的にテストし、新しい攻撃手法へのテストを常に追加してゆく。
   - [バグ報奨金制度](#bounties) をテストネットでのアルファリリースから提供する。
   - 段階的に運用開始し、すべてのフェーズでテストとユーザを増やす
@@ -69,23 +69,22 @@ Ethereumや複雑なブロックチェーンのプログラムは歴史が浅く
   - 有用と思われる新しいセキュリティ対策を採用する
 
 - **ブロックチェーンの特性に注意する**. あなたのプログラミング経験の多くはEthereumの開発にも通用しますが、いくつか注意すべき罠があります。
-  - 外部のcontractをコールする場合は特に注意してください。悪意あるコードが実行され制御フローが変更される可能性があります。
-  - Publicな関数がPublicであることをきちんと理解してください。悪意を持って実行される可能性があります。またPrivateなデータであっても、誰からも参照されうることを認識してください。
-  - gasのコストと、ブロックのgas limitに注意してください。
-  - Keep gas costs and the block gas limit in mind.
+  - 外部のcontractをコールする場合は特に注意する。悪意あるコードが実行され制御フローが変更される可能性がある。
+  - Publicな関数がPublicであることをきちんと理解する。悪意を持って実行される可能性がある。またPrivateなデータであっても、誰からも参照されうることを認識する。
+  - gasのコストと、ブロックのgas limitに注意する。
 
-### Fundamental Tradeoffs: Simplicity versus Complexity cases
+### 根本的なトレードオフ: シンプル vs 複雑
 <a name="fundamental-tradeoffs"></a>
 
-There are multiple fundamental tradeoffs to consider when assessing the structure and security of a smart contract system.  The general recommendation for any smart contract system is to identify the proper balance for these fundamental tradeoffs.
+スマートコントラクトの構造とセキュリティを考える場合、そこには複数の根本的なトレードオフがあります。  
+いかなるスマートコントラクト・システムであってもこれらのトレードオフを適切なバランスとすることを推奨します。
 
-An ideal smart contract system from a software engineering bias is modular, reuses code instead of duplicating it, and supports upgradeable components.  An ideal smart contract system from a secure architecture bias may share this mindset, especially in the case of more complex smart contract systems.
+しかし、そこにはセキュリティとソフトウェア・エンジニアリング・ベストプラクティスの両方を担保できない重用な例外があります。  
+これらのケースでは、適正なバランスは以下のようなスマートコントラクトの特性の前に認識しておくことで最良の組み合わせを選択できます。
 
-However, there are important exceptions where security and software engineering best practices may not be aligned.  In each case, the proper balance is obtained by identifying the optimal mix of properties along contract system dimensions such as:
-
-- Rigid versus Upgradeable
-- Monolithic versus Modular
-- Duplication versus Reuse
+- アップグレード不可 vs アップグレード可能
+- モノリシック vs モジュラー
+- 重複 vs 再利用
 
 #### Rigid versus Upgradeable
 
