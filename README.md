@@ -73,18 +73,18 @@ Ethereumや複雑なブロックチェーンのプログラムは歴史が浅く
   - Publicな関数がPublicであることをきちんと理解する。悪意を持って実行される可能性がある。またPrivateなデータであっても、誰からも参照されうることを認識する。
   - gasのコストと、ブロックのgas limitに注意する。
 
-### Fundamental Tradeoffs: Simplicity versus Complexity cases
+### 根本的なトレードオフ: シンプル vs 複雑
 <a name="fundamental-tradeoffs"></a>
 
-There are multiple fundamental tradeoffs to consider when assessing the structure and security of a smart contract system.  The general recommendation for any smart contract system is to identify the proper balance for these fundamental tradeoffs.
+スマートコントラクトの構造とセキュリティを考える場合、そこには複数の根本的なトレードオフがあります。  
+いかなるスマートコントラクト・システムであってもこれらのトレードオフを適切なバランスとすることを推奨します。
 
-An ideal smart contract system from a software engineering bias is modular, reuses code instead of duplicating it, and supports upgradeable components.  An ideal smart contract system from a secure architecture bias may share this mindset, especially in the case of more complex smart contract systems.
+しかし、そこにはセキュリティとソフトウェア・エンジニアリング・ベストプラクティスの両方を担保できない重用な例外があります。  
+これらのケースでは、適正なバランスは以下のようなスマートコントラクトの特性の前に認識しておくことで最良の組み合わせを選択できます。
 
-However, there are important exceptions where security and software engineering best practices may not be aligned.  In each case, the proper balance is obtained by identifying the optimal mix of properties along contract system dimensions such as:
-
-- Rigid versus Upgradeable
-- Monolithic versus Modular
-- Duplication versus Reuse
+- アップグレード不可 vs アップグレード可能
+- モノリシック vs モジュラー
+- 重複 vs 再利用
 
 #### Rigid versus Upgradeable
 
