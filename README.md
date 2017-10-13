@@ -80,17 +80,18 @@ Ethereumや複雑なブロックチェーンのプログラムは歴史が浅く
 いかなるスマートコントラクト・システムであってもこれらのトレードオフを適切なバランスとすることを推奨します。
 
 しかし、そこにはセキュリティとソフトウェア・エンジニアリング・ベストプラクティスの両方を担保できない重用な例外があります。  
-これらのケースでは、適正なバランスは以下のようなスマートコントラクトの特性の前に認識しておくことで最良の組み合わせを選択できます。
+これらのケースでは、以下のようなスマートコントラクトの特性を事前に認識しておくことで最良の組み合わせを選択できます。
 
 - アップグレード不可 vs アップグレード可能
 - モノリシック vs モジュラー
 - 重複 vs 再利用
 
-#### Rigid versus Upgradeable
+#### アップグレード不可 vs アップグレード可能
 
-While multiple resources, including this one, emphasize malleability characteristics such as Killable, Upgradeable or Modifiable patterns there is a *fundamental tradeoff* between malleability and security.
+多くのドキュメントで、Killable、アップグレード可能、変更可能などのパターンが強調されます。しかしそこにはセキュリティと柔軟性の根本的なトレードオフが存在します。
 
-Malleability patterns by definition add complexity and potential attack surfaces.  Simplicity is particularly effective over complexity in cases where the smart contract system performs a very limited set of functionality for a pre-defined limited period of time, for example a governance-free finite-time-frame token-sale contract system.
+柔軟性の高い設計は複雑性を増し、攻撃の可能性を高めます。  
+シンプルさは複雑さよりも、極めて限定的な機能を限られた期間提供するスマートコントラクトシステムで特に効果的です。例としてはトークンセール(ICO)システムや、governance-free、finite-time-frame、などがあげられます。
 
 #### Monolithic versus Modular
 
