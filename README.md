@@ -93,11 +93,13 @@ Ethereumや複雑なブロックチェーンのプログラムは歴史が浅く
 柔軟性の高い設計は複雑性を増し、攻撃の可能性を高めます。  
 シンプルさは複雑さよりも、極めて限定的な機能を限られた期間提供するスマートコントラクトシステムで特に効果的です。例としてはトークンセール(ICO)システムや、governance-free、finite-time-frame、などがあげられます。
 
-#### Monolithic versus Modular
+#### モノリシック vs モジュラー
 
-A monolithic self-contained contract keeps all knowledge locally identifiable and readable.  While there are few smart contract systems held in high regard that exist as monoliths, there is an argument to be made for extreme locality of data and flow - for example, in the case of optimizing code review efficiency.
 
-As with the other tradeoffs considered here, security best practices trend away from software engineering best practices in simple short-lived contracts and trend towared software engineering best practices in the case of more complex perpetual contract systems.
+モノリシックに全てを詰め込んだコントラクトは、処理に必要なすべての情報を内包し把握しておけます。モノリシックに作成されたスマートコントラクトシステムで高い評価を受けることは稀ですが、たとえばコードレビューの効率化・最適化など、データと処理の流れを極端にローカルに留める手法には議論の余地があります。  
+
+この点も、他のトレードオフと同様に検討しましょう。セキュリティ・ベストプラクティスは期間限定のコントラクトに適した方法と、より複雑で利用期間の長いコントラクトシステムでは異なります。
+
 
 #### Duplication versus Reuse
 
