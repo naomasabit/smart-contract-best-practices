@@ -1,137 +1,115 @@
-# Ethereum Contract Security Techniques and Tips
+# Ethereum Contract セキュリティ・テクニック＆Tips
+
+このドキュメントは
+[ConsenSys/smart-contract-best-practices](https://github.com/ConsenSys/smart-contract-best-practices)
+を日本語訳したものです。
 
 [![Join the chat at https://gitter.im/ConsenSys/smart-contract-best-practices](https://badges.gitter.im/ConsenSys/smart-contract-best-practices.svg)](https://gitter.im/ConsenSys/smart-contract-best-practices?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 
-## Table of contents
+目次:
 
-<!-- TOC built using Sublime's MarkdownTOC plugin -->
-<!-- MarkdownTOC -->
+- [**Solidity セキュリティTips**](#solidity-tips)
+- [**既知の攻撃手法**](#known-attacks)
+  - [***Race Conditions***](#race-conditions)
+    - [Reentrancy](#reentrancy)
+    - [Transaction Ordering Dependence](#transaction-ordering-dependence)
+  - [***Gas Related Attacks***](#dos-with-block-gas-limit)
+  - [***Overflow/Underflow***](#integer-overflow-and-underflow)
+- [**エンジニアリング・テクニック**](#eng-techniques)
+- [**参考ドキュメント**](#bibliography)
 
-- [General Philosophy](#general-philosophy)
-  - [Fundamental Tradeoffs: Simplicity versus Complexity cases](#fundamental-tradeoffs-simplicity-versus-complexity-cases)
-- [Security Notifications](#security-notifications)
-- [Recommendations for Smart Contract Security in Solidity](#recommendations-for-smart-contract-security-in-solidity)
-  - [External Calls](#external-calls)
-  - [Enforce invariants with `assert()`](#enforce-invariants-with-assert)
-  - [Use `assert()` and `require()` properly](#use-assert-and-require-properly)
-  - [Beware rounding with integer division](#beware-rounding-with-integer-division)
-  - [Remember that Ether can be forcibly sent to an account](#remember-that-ether-can-be-forcibly-sent-to-an-account)
-  - [Don't assume contracts are created with zero balance](#dont-assume-contracts-are-created-with-zero-balance)
-  - [Remember that on-chain data is public](#remember-that-on-chain-data-is-public)
-  - [Be aware of the tradeoffs between abstract contracts and interfaces](#be-aware-of-the-tradeoffs-between-abstract-contracts-and-interfaces)
-  - [In 2-party or N-party contracts, beware of the possibility that some participants may "drop offline" and not return](#in-2-party-or-n-party-contracts-beware-of-the-possibility-that-some-participants-may-drop-offline-and-not-return)
-  - [Keep fallback functions simple](#keep-fallback-functions-simple)
-  - [Explicitly mark visibility in functions and state variables](#explicitly-mark-visibility-in-functions-and-state-variables)
-  - [Lock pragmas to specific compiler version](#lock-pragmas-to-specific-compiler-version)
-  - [Beware division by zero \(Solidity < 0.4\)](#beware-division-by-zero-solidity--04)
-  - [Differentiate functions and events](#differentiate-functions-and-events)
-  - [Prefer newer Solidity constructs](#prefer-newer-solidity-constructs)
-- [Known Attacks](#known-attacks)
-  - [Race Conditions\*](#race-conditions%5C)
-  - [Transaction-Ordering Dependence \(TOD\) / Front Running](#transaction-ordering-dependence-tod--front-running)
-  - [Timestamp Dependence](#timestamp-dependence)
-  - [Integer Overflow and Underflow](#integer-overflow-and-underflow)
-  - [DoS with \(Unexpected\) revert](#dos-with-unexpected-revert)
-  - [DoS with Block Gas Limit](#dos-with-block-gas-limit)
-  - [~~Call Depth Attack~~](#%7E%7Ecall-depth-attack%7E%7E)
-- [Software Engineering Techniques](#software-engineering-techniques)
-  - [Upgrading Broken Contracts](#upgrading-broken-contracts)
-  - [Circuit Breakers \(Pause contract functionality\)](#circuit-breakers-pause-contract-functionality)
-  - [Speed Bumps \(Delay contract actions\)](#speed-bumps-delay-contract-actions)
-  - [Rate Limiting](#rate-limiting)
-  - [Contract Rollout](#contract-rollout)
-  - [Bug Bounty Programs](#bug-bounty-programs)
-- [Security-related Documentation and Procedures](#security-related-documentation-and-procedures)
-- [Security Tools](#security-tools)
-  - [Linters](#linters)
-- [Future improvements](#future-improvements)
-- [Smart Contract Security Bibliography](#smart-contract-security-bibliography)
-- [Reviewers](#reviewers)
-- [License](#license)
+このドキュメントは中堅Solidityプログラマにセキュリティの基礎を伝えるために作られています。  
+プルリクエストは大歓迎です。
+小さな修正からセクションの追加、あるいは記事やブログを書いた場合は
+[参考ドキュメント](#bibliography)に追加してください。  
+詳しくは[Contribution Guidelines](CONTRIBUTING.md)を確認してください。  
+(注: 内容の追加などは
+[翻訳元](https://github.com/ConsenSys/smart-contract-best-practices)
+へプルリクエストを投げてください)
 
-<!-- /MarkdownTOC -->
+#### 特に歓迎する項目
 
+以下の領域のコンテンツは特に歓迎します:
 
+- Solidityコードのテスト
+- スマートコントラクトやブロックチェーンベースのプログラミングの、ソフトウェア開発チュートリアル
 
+## 一般的な知識
 
-This document is designed to provide a starting *security* baseline for intermediate Solidity programmers.  It additionally includes *security philosophies; bug bounty program guidelines; documentation and procedures; and tools.*
+Ethereumや複雑なブロックチェーンのプログラムは歴史が浅く、極めて実験的な段階です。  
+したがって新しいバグやセキュリティ上のリスクが発見されたり、
+新しいベストプラクティスが開発されるなど、セキュリティの領域は常に変化してゆくと認識する必要があります。    
 
-Pull requests are very welcome, from small fixes to sections, and if you've written an article or blog post, please add it to the [bibliography.](#bibliography)  See our [Contribution Guidelines](CONTRIBUTING.md).
+スマートコントラクトのプログラミングには、あなたの今までの経験とは全く異なるマインドセットが必要です。  
+1つのミスが多大な損害を与え、かつその修正は困難な場合があります。
+これはWEB開発よりも、むしろ組み込み開発や金融系の開発によく似ています。
+既知の脆弱性に備えるだけでは不充分であり、
+新しい開発手法を身につける必要があります。
 
-#### Additional Requested Content
+- **危機に備える**. ある程度の規模のContractであれば何らかの不具合を含みます。そのため、バグや脆弱性が発見された際にしっかりと対応できるコードを書く必要があります。
+  - 危機的な状況が発生したらContractを一時停止する("サーキットブレーカー")
+  - 危機に備えて資金量を管理する (レート制限, 上限量)
+  - バグFIXや改善のためにアップグレード方法を準備する
 
-We especially welcome content in the following areas:
+- [**慎重に運用開始する**.](#contract-rollout) バグを本番環境リリース前に潰しておくことは最善の打ち手です。
+  - Contractを徹底的にテストし、新しい攻撃手法へのテストを常に追加してゆく。
+  - [バグ報奨金制度](#bounties) をテストネットでのアルファリリースから提供する。
+  - 段階的に運用開始し、すべてのフェーズでテストとユーザを増やす
 
-- Testing Solidity code (structure, frameworks, common test idioms)
-- Software engineering practices for smart contracts and/or blockchain-based programming
+- **Contractをシンプルに保つ**. 複雑さは不具合の可能性を高めます。
+  - Contractのロジックがシンプルであることを担保する
+  - Contractと関数を小さく保つためにモジュラー化する
+  - 可能な限り既存のツールやコードを使用する (例. ランダム数を取得する処理を書かない)
+  - 処理は可能な限りわかりやすく書く
+  - ブロックチェーンは、システムで非中央集権性が求められる部分にだけ適用する
 
-## General Philosophy
+- **常に最新の情報を追う**. 新しいセキュリティ情報を追うために、次のセクションにまとめた一覧を活用してください。
+  - あなたのcontractに新しく発見されたバグが含まれないか確認する
+  - 可及的速やかに全てのツールやライブラリを最新バージョンへ更新する
+  - 有用と思われる新しいセキュリティ対策を採用する
 
-Ethereum and complex blockchain programs are new and highly experimental. Therefore, you should expect constant changes in the security landscape, as new bugs and security risks are discovered, and new best practices are developed. Following the security practices in this document is therefore only the beginning of the security work you will need to do as a smart contract developer.
+- **ブロックチェーンの特性に注意する**. あなたのプログラミング経験の多くはEthereumの開発にも通用しますが、いくつか注意すべき罠があります。
+  - 外部のcontractをコールする場合は特に注意する。悪意あるコードが実行され制御フローが変更される可能性がある。
+  - Publicな関数がPublicであることをきちんと理解する。悪意を持って実行される可能性がある。またPrivateなデータであっても、誰からも参照されうることを認識する。
+  - gasのコストと、ブロックのgas limitに注意する。
 
-Smart contract programming requires a different engineering mindset than you may be used to. The cost of failure can be high, and change can be difficult, making it in some ways more similar to hardware programming or financial services programming than web or mobile development. It is therefore not enough to defend against known vulnerabilities. Instead, you will need to learn a new philosophy of development:
-
-- **Prepare for failure**. Any non-trivial contract will have errors in it. Your code must, therefore, be able to respond to bugs and vulnerabilities gracefully.
-  - Pause the contract when things are going wrong ('circuit breaker')
-  - Manage the amount of money at risk (rate limiting, maximum usage)
-  - Have an effective upgrade path for bugfixes and improvements
-
-- [**Rollout carefully**.](#contract-rollout) It is always better to catch bugs before a full production release.
-  - Test contracts thoroughly, and add tests whenever new attack vectors are discovered
-  - Provide [bug bounties](#bounties) starting from alpha testnet releases
-  - Rollout in phases, with increasing usage and testing in each phase
-
-- **Keep contracts simple**. Complexity increases the likelihood of errors.
-  - Ensure the contract logic is simple
-  - Modularize code to keep contracts and functions small
-  - Use already-written tools or code where possible (eg. don't roll your own random number generator)
-  - Prefer clarity to performance whenever possible
-  - Only use the blockchain for the parts of your system that require decentralization
-
-- **Stay up to date**. Use the resources listed in the next section to keep track of new security developments.
-  - Check your contracts for any new bug that's discovered
-  - Upgrade to the latest version of any tool or library as soon as possible
-  - Adopt new security techniques that appear useful
-
-- **Be aware of blockchain properties**. While much of your programming experience will be relevant to Ethereum programming, there are some pitfalls to be aware of.
-  - Be extremely careful about external contract calls, which may execute malicious code and change control flow.
-  - Understand that your public functions are public, and may be called maliciously. Your private data is also viewable by anyone.
-  - Keep gas costs and the block gas limit in mind.
-
-### Fundamental Tradeoffs: Simplicity versus Complexity cases
+### 根本的なトレードオフ: シンプル vs 複雑
 <a name="fundamental-tradeoffs"></a>
 
-There are multiple fundamental tradeoffs to consider when assessing the structure and security of a smart contract system.  The general recommendation for any smart contract system is to identify the proper balance for these fundamental tradeoffs.
+スマートコントラクトの構造とセキュリティを考える場合、そこには複数の根本的なトレードオフがあります。  
+いかなるスマートコントラクト・システムであってもこれらのトレードオフを適切なバランスとすることを推奨します。
 
-An ideal smart contract system from a software engineering bias is modular, reuses code instead of duplicating it, and supports upgradeable components.  An ideal smart contract system from a secure architecture bias may share this mindset, especially in the case of more complex smart contract systems.
+しかし、そこにはセキュリティとソフトウェア・エンジニアリング・ベストプラクティスの両方を担保できない重用な例外があります。  
+これらのケースでは、以下のようなスマートコントラクトの特性を事前に認識しておくことで最良の組み合わせを選択できます。
 
-However, there are important exceptions where security and software engineering best practices may not be aligned.  In each case, the proper balance is obtained by identifying the optimal mix of properties along contract system dimensions such as:
+- アップグレード不可 vs アップグレード可能
+- モノリシック vs モジュラー
+- 重複 vs 再利用
 
-- Rigid versus Upgradeable
-- Monolithic versus Modular
-- Duplication versus Reuse
+#### アップグレード不可 vs アップグレード可能
 
-#### Rigid versus Upgradeable
+多くのドキュメントで、Killable、アップグレード可能、変更可能などのパターンが強調されます。しかしそこにはセキュリティと柔軟性の根本的なトレードオフが存在します。
 
-While multiple resources, including this one, emphasize malleability characteristics such as Killable, Upgradeable or Modifiable patterns there is a *fundamental tradeoff* between malleability and security.
+柔軟性の高い設計は複雑性を増し、攻撃の可能性を高めます。  
+シンプルさは複雑さよりも、極めて限定的な機能を限られた期間提供するスマートコントラクトシステムで特に効果的です。例としてはトークンセール(ICO)システムや、governance-free、finite-time-frame、などがあげられます。
 
-Malleability patterns by definition add complexity and potential attack surfaces.  Simplicity is particularly effective over complexity in cases where the smart contract system performs a very limited set of functionality for a pre-defined limited period of time, for example, a governance-free finite-time-frame token-sale contract system.
+#### モノリシック vs モジュラー
 
-#### Monolithic versus Modular
 
-A monolithic self-contained contract keeps all knowledge locally identifiable and readable.  While there are few smart contract systems held in high regard that exist as monoliths, there is an argument to be made for extreme locality of data and flow - for example, in the case of optimizing code review efficiency.
+モノリシックに全てを詰め込んだコントラクトは、処理に必要なすべての情報を内包し把握しておけます。モノリシックに作成されたスマートコントラクトシステムで高い評価を受けることは稀ですが、たとえばコードレビューの効率化・最適化など、データと処理の流れを極端にローカルに留める手法には議論の余地があります。  
 
-As with the other tradeoffs considered here, security best practices trend away from software engineering best practices in simple short-lived contracts and trend toward software engineering best practices in the case of more complex perpetual contract systems.
+この点も、他のトレードオフと同様に検討しましょう。セキュリティ・ベストプラクティスは期間限定のコントラクトに適した方法と、より複雑で利用期間の長いコントラクトシステムでは異なります。
 
-#### Duplication versus Reuse
 
-A smart contract system from a software engineering perspective wishes to maximize reuse where reasonable.  There are many ways to reuse contract code in Solidity.  Using proven previously-deployed contracts *which you own* is generally the safest manner to achieve code reuse.
+#### 重複 vs 再利用
 
-Duplication is frequently relied upon in cases where self-owned previously-deployed contracts are not available.  Efforts such as [Live Libs](https://github.com/ConsenSys/live-libs) and [Zeppelin Solidity](https://github.com/OpenZeppelin/zeppelin-solidity) seek to provide patterns such that secure code can be re-used without duplication.  Any contract security analyses must include any re-used code that has not previously established a level of trust commensurate with the funds at risk in the target smart contract system.
+ソフトウェア・エンジニアリングの観点からは、スマートコントラクトシステムは可能な限り再利用可能であることが望ましいと言えます。Solidityではコントラクトコードを再利用するための複数の方法があります。 **自分でデプロイした** 既存のコントラクトは、一般的にコントラクトを再利用する上で最も安全な方法です。
+
+**重複** は、自分でデプロイしたコントラクトが利用できない場合にしばしば有効です。[Live Libs](https://github.com/ConsenSys/live-libs) や [Zeppelin Solidity](https://github.com/OpenZeppelin/zeppelin-solidity)は、セキュアなコード・パターンの提供を模索しています。コントラクトのセキュリティ分析では、再利用コードであっても対象のスマートコントラクトシステムで扱う資金に釣り合ったレベルの信頼性が求められます。
 
 ## Security Notifications
 
-This is a list of resources that will often highlight discovered exploits in Ethereum or Solidity. The official source of security notifications is the Ethereum Blog, but in many cases, vulnerabilities will be disclosed and discussed earlier in other locations.
+This is a list of resources that will often highlight discovered exploits in Ethereum or Solidity. The official source of security notifications is the Ethereum Blog, but in many cases vulnerabilities will be disclosed and discussed earlier in other locations.
 
 - [Ethereum Blog](https://blog.ethereum.org/): The official Ethereum blog
   - [Ethereum Blog - Security only](https://blog.ethereum.org/category/security/): All blog posts that are tagged *Security*
@@ -163,7 +141,7 @@ Beyond following core developers, it is critical to participate in the wider blo
 #### Avoid external calls when possible
 <a name="avoid-external-calls"></a>
 
-Calls to untrusted contracts can introduce several unexpected risks or errors. External calls may execute malicious code in that contract _or_ any other contract that it depends upon. As such, every external call should be treated as a potential security risk and removed if possible. When it is not possible to remove external calls, use the recommendations in the rest of this section to minimize the danger.
+Calls to untrusted contracts can introduce several unexpected risks or errors. External calls may execute malicious code in that contract _or_ any other contract that it depends upon. As such, every external call should be treated as a potential security risk, and removed if possible. When it is not possible to remove external calls, use the recommendations in the rest of this section to minimize the danger.
 
 <a name="send-vs-call-value"></a>
 
@@ -190,7 +168,7 @@ a [*push* and *pull*](#favor-pull-over-push-payments) mechanism, using `send()` 
 for the *push* component and `call.value()()` for the *pull* component.
 
 It is worth pointing out that exclusive use of `send()` or `transfer()` for value transfers
-does not itself make a contract safe against reentrancy but only makes those
+does not itself make a contract safe against reentrancy, but only makes those
 specific value transfers safe against reentrancy.
 
 
@@ -299,7 +277,7 @@ function makeUntrustedWithdrawal(uint amount) {
 
 ### Enforce invariants with `assert()`
 
-An assert guard triggers when an assertion fails - such as an invariant property changing. For example, the token to ether issuance ratio, in a token issuance contract, may be fixed. You can verify that this is the case at all times with an `assert()`. Assert guards should often be combined with other techniques, such as pausing the contract and allowing upgrades. (Otherwise, you may end up stuck, with an assertion that is always failing.)
+An assert guard triggers when an assertion fails - such as an invariant property changing. For example, the token to ether issuance ratio, in a token issuance contract, may be fixed. You can verify that this is the case at all times with an `assert()`. Assert guards should often be combined with other techniques, such as pausing the contract and allowing upgrades. (Otherwise you may end up stuck, with an assertion that is always failing.)
 
 Example:
 
@@ -321,7 +299,7 @@ Note that the assertion is *not* a strict equality of the balance because the co
 
 ### Use `assert()` and `require()` properly
 
-In Solidity 0.4.10 `assert()` and `require()` were introduced. `require(condition)` is meant to be used for input validation, which should be done on any user input, and reverts if the condition is false. `assert(condition)` also reverts if the condition is false but should be used only for invariants: internal errors or to check if your contract has reached an invalid state. Following this paradigm allows formal analysis tools to verify that the invalid opcode can never be reached: meaning no invariants in the code are violated and that the code is formally verified.
+In Solidity 0.4.10 `assert()` and `require()` were introduced. `require(condition)` is meant to be used for input validation, which should be done on any user input, and reverts if condition is false. `assert(condition)` also reverts if condition is false but should be used only for invariants: internal errors or to check if your contract has reached an invalid state. Following this paradigm allows formal analysis tools to verify that the invalid opcode can never be reached: meaning no invariants in the code are violated and that the code is formally verified.
 
 <a name="beware-rounding-with-integer-division"></a>
 
@@ -398,7 +376,7 @@ function() payable { LogDepositReceived(msg.sender); }
 
 ### Explicitly mark visibility in functions and state variables
 
-Explicitly label the visibility of functions and state variables. Functions can be specified as being `external`, `public`, `internal` or `private`. Please understand the differences between them, for example, `external` may be sufficient instead of `public`. For state variables, `external` is not possible. Labeling the visibility explicitly will make it easier to catch incorrect assumptions about who can call the function or access the variable.
+Explicitly label the visibility of functions and state variables. Functions can be specified as being `external`, `public`, `internal` or `private`. Please understand the differences between them, for example `external` may be sufficient instead of `public`. For state variables, `external` is not possible. Labeling the visibility explicitly will make it easier to catch incorrect assumptions about who can call the function or access the variable.
 
 ```
 // bad
@@ -467,7 +445,7 @@ Prefer constructs/aliases such as `selfdestruct` (over `suicide`) and `keccak256
 
 <a name="known-attacks"></a>
 
-## Known Attacks
+## 既知の攻撃手法
 
 <a name="race-conditions"></a>
 
@@ -648,7 +626,7 @@ An attacker can call `getLock()`, and then never call `releaseLock()`. If they d
 
 <a name="footnote-race-condition-terminology"></a>
 
-<div style='font-size: 80%; display: inline;'>* Some may object to the use of the term <i>race condition</i> since Ethereum does not currently have true parallelism. However, there is still the fundamental feature of logically distinct processes contending for resources, and the same sorts of pitfalls and potential solutions apply.</div>
+<div style='font-size: 80%; display: inline;'>* Some may object to the use of the term <i>race condition</i>, since Ethereum does not currently have true parallelism. However, there is still the fundamental feature of logically distinct processes contending for resources, and the same sorts of pitfalls and potential solutions apply.</div>
 
 <a name="transaction-ordering-dependence"></a>
 
@@ -690,7 +668,7 @@ mapping (address => uint256) public balanceOf;
 // INSECURE
 function transfer(address _to, uint256 _value) {
     /* Check if sender has balance */
-    require(balanceOf[msg.sender] >= _value);
+    require(balanceOf[msg.sender] > _value);
     /* Add and subtract new balances */
     balanceOf[msg.sender] -= _value;
     balanceOf[_to] += _value;
@@ -738,9 +716,9 @@ contract Auction {
 }
 ```
 
-When it tries to refund the old leader, it reverts if the refund fails. This means that a malicious bidder can become the leader while making sure that any refunds to their address will *always* fail. In this way, they can prevent anyone else from calling the `bid()` function, and stay the leader forever. A recommendation is to set up a [pull payment system](https://github.com/ConsenSys/smart-contract-best-practices/#favor-pull-over-push-payments) instead, as described earlier.
+When it tries to refund the old leader, it reverts if the refund fails. This means that a malicious bidder can become the leader, while making sure that any refunds to their address will *always* fail. In this way, they can prevent anyone else from calling the `bid()` function, and stay the leader forever. A recommendation is to set up a [pull payment system](https://github.com/ConsenSys/smart-contract-best-practices/#favor-pull-over-push-payments) instead, as described earlier.
 
-Another example is when a contract may iterate through an array to pay users (e.g., supporters in a crowdfunding contract). It's common to want to make sure that each payment succeeds. If not, one should revert. The issue is that if one call fails, you are reverting the whole payout system, meaning the loop will never complete. No one gets paid because one address is forcing an error.
+Another example is when a contract may iterate through an array to pay users (e.g., supporters in a crowdfunding contract). It's common to want to make sure that each payment succeeds. If not, one should revert. The issue is that if one call fails, you are reverting the whole payout system, meaning the loop will never complete. No one gets paid, because one address is forcing an error.
 
 
 ```
@@ -763,7 +741,7 @@ Again, the recommended solution is to [favor pull over push payments](#favor-pul
 
 You may have noticed another problem with the previous example: by paying out to everyone at once, you risk running into the block gas limit. Each Ethereum block can process a certain maximum amount of computation. If you try to go over that, your transaction will fail.
 
-This can lead to problems even in the absence of an intentional attack. However, it's especially bad if an attacker can manipulate the amount of gas needed. In the case of the previous example, the attacker could add a bunch of addresses, each of which needs to get a very small refund. The gas cost of refunding each of the attacker's addresses could, therefore, end up being more than the gas limit, blocking the refund transaction from happening at all.
+This can lead to problems even in the absence of an intentional attack. However, it's especially bad if an attacker can manipulate the amount of gas needed. In the case of the previous example, the attacker could add a bunch of addresses, each of which needs to get a very small refund. The gas cost of refunding each of the attacker's addresses could therefore end up being more than the gas limit, blocking the refund transaction from happening at all.
 
 This is another reason to [favor pull over push payments](#favor-pull-over-push-payments).
 
@@ -852,7 +830,7 @@ contract SomeRegister {
 There are two main disadvantages to this approach:
 
 1. Users must always look up the current address, and anyone who fails to do so risks using an old version of the contract
-2. You will need to think carefully about how to deal with the contract data when you replace the contract
+2. You will need to think carefully about how to deal with the contract data, when you replace the contract
 
 The alternate approach is to have a contract forward calls and data to the latest version of the contract:
 
@@ -885,13 +863,13 @@ contract Relay {
 }
 ```
 
-This approach avoids the previous problems but has problems of its own. You must be extremely careful with how you store data in this contract. If your new contract has a different storage layout than the first, your data may end up corrupted. Additionally, this simple version of the pattern cannot return values from functions, only forward them, which limits its applicability. ([More complex implementations](https://github.com/ownage-ltd/ether-router) attempt to solve this with in-line assembly code and a registry of return sizes.)
+This approach avoids the previous problems, but has problems of its own. You must be extremely careful with how you store data in this contract. If your new contract has a different storage layout than the first, your data may end up corrupted. Additionally, this simple version of the pattern cannot return values from functions, only forward them, which limits its applicability. ([More complex implementations](https://github.com/ownage-ltd/ether-router) attempt to solve this with in-line assembly code and a registry of return sizes.)
 
 Regardless of your approach, it is important to have some way to upgrade your contracts, or they will become unusable when the inevitable bugs are discovered in them.
 
 ### Circuit Breakers (Pause contract functionality)
 
-Circuit breakers stop execution if certain conditions are met, and can be useful when new errors are discovered. For example, most actions may be suspended in a contract if a bug is discovered, and the only action now active is a withdrawal. You can either give certain trusted parties the ability to trigger the circuit breaker or else have programmatic rules that automatically trigger the certain breaker when certain conditions are met.
+Circuit breakers stop execution if certain conditions are met, and can be useful when new errors are discovered. For example, most actions may be suspended in a contract if a bug is discovered, and the only action now active is a withdrawal. You can either give certain trusted parties the ability to trigger the circuit breaker, or else have programmatic rules that automatically trigger the certain breaker when certain conditions are met.
 
 Example:
 
@@ -1014,7 +992,7 @@ In the early stages, you can restrict the amount of Ether for any user (or for t
 
 Some tips for running bounty programs:
 
-- Decide which currency bounties will be distributed in (BTC and/or ETH)
+- Decide which currency will bounties be distributed in (BTC and/or ETH)
 - Decide on an estimated total budget for bounty rewards
 - From the budget, determine three tiers of rewards:
   - smallest reward you are willing to give out
@@ -1083,10 +1061,8 @@ When launching a contract that will have substantial funds or is required to be 
 - [Oyente](https://github.com/melonproject/oyente) - Analyze Ethereum code to find common vulnerabilities, based on this [paper](http://www.comp.nus.edu.sg/~loiluu/papers/oyente.pdf).
 - [solidity-coverage](https://github.com/sc-forks/solidity-coverage) - Code coverage for Solidity testing.
 - [Solgraph](https://github.com/raineorshine/solgraph) - Generates a DOT graph that visualizes function control flow of a Solidity contract and highlights potential security vulnerabilities.
-- [Mythril](https://github.com/b-mueller/mythril/) - Reversing and bug hunting framework for the Ethereum blockchain
 
-
-### Linters
+## Linters
 
 Linters improve code quality by enforcing rules for style and composition, making code easier to read and review.
 
@@ -1097,7 +1073,6 @@ Linters improve code quality by enforcing rules for style and composition, makin
 
 
 ## Future improvements
-
 - **Editor Security Warnings**: Editors will soon alert for common security errors, not just compilation errors. Browser Solidity is getting these features soon.
 
 - **New functional languages that compile to EVM bytecode**: Functional languages gives certain guarantees over procedural languages like Solidity, namely immutability within a function and strong compile time checking. This can reduce the risk of errors by providing deterministic behavior. (for more see [this](https://plus.google.com/u/0/events/cmqejp6d43n5cqkdl3iu0582f4k), Curry-Howard correspondence, and linear logic)
@@ -1145,9 +1120,9 @@ Here are some of them.  Feel free to add more.
 ## Reviewers
 
 The following people have reviewed this document (date and commit they reviewed in parentheses):
-
-* Bill Gleim (07/29/2016 3495fb5)
-* Bill Gleim (03/15/2017 0244f4e)
+Bill Gleim (07/29/2016 3495fb5)
+Bill Gleim (03/15/2017 0244f4e)
+-
 
 ## License
 
