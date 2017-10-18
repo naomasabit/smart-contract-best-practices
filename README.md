@@ -91,21 +91,21 @@ Ethereumや複雑なブロックチェーンのプログラムは歴史が浅く
 多くのドキュメントで、Killable、アップグレード可能、変更可能などのパターンが強調されます。しかしそこにはセキュリティと柔軟性の根本的なトレードオフが存在します。
 
 柔軟性の高い設計は複雑性を増し、攻撃の可能性を高めます。  
-シンプルさは複雑さよりも、極めて限定的な機能を限られた期間提供するスマートコントラクトシステムで特に効果的です。例としてはトークンセール(ICO)システムや、governance-free、finite-time-frame、などがあげられます。
+シンプルさは複雑さよりも、極めて限定的な機能を限られた期間提供するスマートコントラクトシステムで特に効果的です。例としてはトークンセール(ICO)システムや、governance-free、finite-time-frame、などがあげられます。
 
 #### モノリシック vs モジュラー
 
 
-モノリシックに全てを詰め込んだコントラクトは、処理に必要なすべての情報を内包し把握しておけます。モノリシックに作成されたスマートコントラクトシステムで高い評価を受けることは稀ですが、たとえばコードレビューの効率化・最適化など、データと処理の流れを極端にローカルに留める手法には議論の余地があります。  
+モノリシックに全てを詰め込んだコントラクトは、処理に必要なすべての情報を内包し把握しておけます。モノリシックに作成されたスマートコントラクトシステムで高い評価を受けることは稀ですが、たとえばコードレビューの効率化・最適化など、データと処理の流れを極端にローカルに留める手法には議論の余地があります。  
 
 この点も、他のトレードオフと同様に検討しましょう。セキュリティ・ベストプラクティスは期間限定のコントラクトに適した方法と、より複雑で利用期間の長いコントラクトシステムでは異なります。
 
 
-#### Duplication versus Reuse
+#### 重複 vs 再利用
 
-A smart contract system from a software engineering perspective wishes to maximize reuse where reasonable.  There are many ways to reuse contract code in Solidity.  Using proven previously-deployed contracts *which you own* is generally the safest manner to achieve code reuse.
+ソフトウェア・エンジニアリングの観点からは、スマートコントラクトシステムは可能な限り再利用可能であることが望ましいと言えます。Solidityではコントラクトコードを再利用するための複数の方法があります。 **自分でデプロイした** 既存のコントラクトは、一般的にコントラクトを再利用する上で最も安全な方法です。
 
-Duplication is frequently relied upon in cases where self-owned previously-deployed contracts are not available.  Efforts such as [Live Libs](https://github.com/ConsenSys/live-libs) and [Zeppelin Solidity](https://github.com/OpenZeppelin/zeppelin-solidity) seek to provide patterns such that secure code can be re-used without duplication.  Any contract security analyses must include any re-used code that has not previously established a level of trust commensurate with the funds at risk in the target smart contract system.
+**重複** は、自分でデプロイしたコントラクトが利用できない場合にしばしば有効です。[Live Libs](https://github.com/ConsenSys/live-libs) や [Zeppelin Solidity](https://github.com/OpenZeppelin/zeppelin-solidity)は、セキュアなコード・パターンの提供を模索しています。コントラクトのセキュリティ分析では、再利用コードであっても対象のスマートコントラクトシステムで扱う資金に釣り合ったレベルの信頼性が求められます。
 
 ## Security Notifications
 
