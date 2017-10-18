@@ -72,6 +72,8 @@
 - Solidityコードのテスト
 - スマートコントラクトやブロックチェーンベースのプログラミングの、ソフトウェア開発チュートリアル
 
+<a name="general-philosophy"></a>
+
 ## 一般的な知識
 
 Ethereumや複雑なブロックチェーンのプログラムは歴史が浅く、極めて実験的な段階です。  
@@ -112,7 +114,7 @@ Ethereumや複雑なブロックチェーンのプログラムは歴史が浅く
   - gasのコストと、ブロックのgas limitに注意する。
 
 ### 根本的なトレードオフ: シンプル vs 複雑
-<a name="fundamental-tradeoffs"></a>
+<a name="fundamental-tradeoffs-simplicity-versus-complexity-cases"></a>
 
 スマートコントラクトの構造とセキュリティを考える場合、そこには複数の根本的なトレードオフがあります。  
 いかなるスマートコントラクト・システムであってもこれらのトレードオフを適切なバランスとすることを推奨します。
