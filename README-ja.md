@@ -14,7 +14,7 @@
 
 - [一般的な知識](#general-philosophy)
   - [根本的なトレードオフ: シンプル vs 複雑](#fundamental-tradeoffs-simplicity-versus-complexity-cases)
-- [Security Notifications](#security-notifications)
+- [Security Notifications](#security-notifications) セキュリティに関する告知
 - [Recommendations for Smart Contract Security in Solidity](#recommendations-for-smart-contract-security-in-solidity)
   - [External Calls](#external-calls)
   - [Enforce invariants with `assert()`](#enforce-invariants-with-assert)
@@ -145,13 +145,13 @@ Ethereumや複雑なブロックチェーンのプログラムは歴史が浅く
 
 **重複** は、自分でデプロイしたコントラクトが利用できない場合にしばしば有効です。[Live Libs](https://github.com/ConsenSys/live-libs) や [Zeppelin Solidity](https://github.com/OpenZeppelin/zeppelin-solidity)は、セキュアなコード・パターンの提供を模索しています。コントラクトのセキュリティ分析では、再利用コードであっても対象のスマートコントラクトシステムで扱う資金に釣り合ったレベルの信頼性が求められます。
 
-## Security Notifications
+## セキュリティに関する告知
 
-This is a list of resources that will often highlight discovered exploits in Ethereum or Solidity. The official source of security notifications is the Ethereum Blog, but in many cases vulnerabilities will be disclosed and discussed earlier in other locations.
+これは、しばしばEthereumやSolidityのセキュリティに関する情報が掲載されるリソースのリストです。公式なセキュリティに関する告知はオフィシャルブログで発表されますが、多くの場合、脆弱性はその他の場所でいち早く公開・議論されます。
 
-- [Ethereum Blog](https://blog.ethereum.org/): The official Ethereum blog
-  - [Ethereum Blog - Security only](https://blog.ethereum.org/category/security/): All blog posts that are tagged *Security*
-- [Ethereum Gitter](https://gitter.im/orgs/ethereum/rooms) chat rooms
+- [Ethereum Blog](https://blog.ethereum.org/): Ethereumのオフィシャルブログ
+  - [Ethereum Blog - Security only](https://blog.ethereum.org/category/security/): **Security** タグの付いたブログポスト
+- [Ethereum Gitter](https://gitter.im/orgs/ethereum/rooms) チャットルーム
   - [Solidity](https://gitter.im/ethereum/solidity)
   - [Go-Ethereum](https://gitter.im/ethereum/go-ethereum)
   - [CPP-Ethereum](https://gitter.im/ethereum/cpp-ethereum)
@@ -159,16 +159,17 @@ This is a list of resources that will often highlight discovered exploits in Eth
 - [Reddit](https://www.reddit.com/r/ethereum)
 - [Network Stats](https://ethstats.net/)
 
-It's highly recommended that you *regularly* read all these sources, as exploits they note may impact your contracts.
-
-Additionally, here is a list of Ethereum core developers who may write about security, and see the [bibliography](https://github.com/ConsenSys/smart-contract-best-practices#smart-contract-security-bibliography) for more from the community.
+あなたのコントラクトに関連する情報が掲載される可能性があるため、これら全てのリソースを **定期的に** チェックすることを強く推奨します。
+  
+また、以下のリストはセキュリティについて言及する可能性のあるEthereumのコア・デベロッパーたちです。[bibliography](https://github.com/ConsenSys/smart-contract-best-practices#smart-contract-security-bibliography) にはより多くのコミュニティからの情報がまとめられています。
 
 - **Vitalik Buterin**: [Twitter](https://twitter.com/vitalikbuterin), [Github](https://github.com/vbuterin), [Reddit](https://www.reddit.com/user/vbuterin), [Ethereum Blog](https://blog.ethereum.org/author/vitalik-buterin/)
 - **Dr. Christian Reitwiessner**: [Twitter](https://twitter.com/ethchris), [Github](https://github.com/chriseth), [Ethereum Blog](https://blog.ethereum.org/author/christian_r/)
 - **Dr. Gavin Wood**: [Twitter](https://twitter.com/gavofyork), [Blog](http://gavwood.com/), [Github](https://github.com/gavofyork)
 - **Vlad Zamfir**: [Twitter](https://twitter.com/vladzamfir), [Github](https://github.com/vladzamfir), [Ethereum Blog](https://blog.ethereum.org/author/vlad/)
 
-Beyond following core developers, it is critical to participate in the wider blockchain-related security community - as security disclosures or observations will come through a variety of parties.
+コア・デベロッパーを通じて、ブロックチェーンに関連した広く重用なセキュリティ周りのコミュニティにリーチできるでしょう。セキュリティについての情報公開や観測状況が各所から寄せられます。
+
 
 <a name="solidity-tips"></a>
 
