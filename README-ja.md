@@ -14,7 +14,7 @@
 
 - [一般的な知識](#general-philosophy)
   - [根本的なトレードオフ: シンプル vs 複雑](#fundamental-tradeoffs-simplicity-versus-complexity-cases)
-- [Security Notifications](#security-notifications) セキュリティに関する告知
+- [セキュリティに関する告知](#security-notifications) 
 - [Recommendations for Smart Contract Security in Solidity](#recommendations-for-smart-contract-security-in-solidity)
   - [External Calls](#external-calls)
   - [Enforce invariants with `assert()`](#enforce-invariants-with-assert)
@@ -144,6 +144,8 @@ Ethereumや複雑なブロックチェーンのプログラムは歴史が浅く
 ソフトウェア・エンジニアリングの観点からは、スマートコントラクトシステムは可能な限り再利用可能であることが望ましいと言えます。Solidityではコントラクトコードを再利用するための複数の方法があります。 **自分でデプロイした** 既存のコントラクトは、一般的にコントラクトを再利用する上で最も安全な方法です。
 
 **重複** は、自分でデプロイしたコントラクトが利用できない場合にしばしば有効です。[Live Libs](https://github.com/ConsenSys/live-libs) や [Zeppelin Solidity](https://github.com/OpenZeppelin/zeppelin-solidity)は、セキュアなコード・パターンの提供を模索しています。コントラクトのセキュリティ分析では、再利用コードであっても対象のスマートコントラクトシステムで扱う資金に釣り合ったレベルの信頼性が求められます。
+
+<a name="security-notifications"></a>
 
 ## セキュリティに関する告知
 
