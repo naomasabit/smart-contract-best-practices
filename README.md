@@ -101,11 +101,11 @@ Ethereumや複雑なブロックチェーンのプログラムは歴史が浅く
 この点も、他のトレードオフと同様に検討しましょう。セキュリティ・ベストプラクティスは期間限定のコントラクトに適した方法と、より複雑で利用期間の長いコントラクトシステムでは異なります。
 
 
-#### Duplication versus Reuse
+#### 重複 vs 再利用
 
-A smart contract system from a software engineering perspective wishes to maximize reuse where reasonable.  There are many ways to reuse contract code in Solidity.  Using proven previously-deployed contracts *which you own* is generally the safest manner to achieve code reuse.
+ソフトウェア・エンジニアリングの観点からは、スマートコントラクトシステムは可能な限り再利用可能であることが望ましいと言えます。Solidityではコントラクトコードを再利用するための複数の方法があります。 **自分でデプロイした** 既存のコントラクトは、一般的にコントラクトを再利用する上で最も安全な方法です。
 
-Duplication is frequently relied upon in cases where self-owned previously-deployed contracts are not available.  Efforts such as [Live Libs](https://github.com/ConsenSys/live-libs) and [Zeppelin Solidity](https://github.com/OpenZeppelin/zeppelin-solidity) seek to provide patterns such that secure code can be re-used without duplication.  Any contract security analyses must include any re-used code that has not previously established a level of trust commensurate with the funds at risk in the target smart contract system.
+**重複** は、自分でデプロイしたコントラクトが利用できない場合にしばしば有効です。[Live Libs](https://github.com/ConsenSys/live-libs) や [Zeppelin Solidity](https://github.com/OpenZeppelin/zeppelin-solidity)は、セキュアなコード・パターンの提供を模索しています。コントラクトのセキュリティ分析では、再利用コードであっても対象のスマートコントラクトシステムで扱う資金に釣り合ったレベルの信頼性が求められます。
 
 ## Security Notifications
 
