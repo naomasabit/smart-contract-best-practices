@@ -15,8 +15,8 @@
 - [一般的な知識](#general-philosophy)
   - [根本的なトレードオフ: シンプル vs 複雑](#fundamental-tradeoffs-simplicity-versus-complexity-cases)
 - [セキュリティに関する告知](#security-notifications) 
-- [Recommendations for Smart Contract Security in Solidity](#recommendations-for-smart-contract-security-in-solidity)
-  - [External Calls](#external-calls)
+- [Solidityにおけるスマートコントラクトセキュリティための推奨事項](#recommendations-for-smart-contract-security-in-solidity)
+  - [外部呼び出し](#external-calls)
   - [Enforce invariants with `assert()`](#enforce-invariants-with-assert)
   - [Use `assert()` and `require()` properly](#use-assert-and-require-properly)
   - [Beware rounding with integer division](#beware-rounding-with-integer-division)
@@ -177,43 +177,32 @@ Ethereumや複雑なブロックチェーンのプログラムは歴史が浅く
 
 <a name="solidity-tips"></a>
 
-## Recommendations for Smart Contract Security in Solidity
+## Solidityにおけるスマートコントラクトセキュリティための推奨事項
 
-### External Calls
+### 外部呼び出し
 
-#### Avoid external calls when possible
+#### 可能であれば外部呼び出しは避ける
 <a name="avoid-external-calls"></a>
 
-Calls to untrusted contracts can introduce several unexpected risks or errors. External calls may execute malicious code in that contract _or_ any other contract that it depends upon. As such, every external call should be treated as a potential security risk, and removed if possible. When it is not possible to remove external calls, use the recommendations in the rest of this section to minimize the danger.
+信頼されていないcontractsを呼び出すと、いくつかの予期しないリスクやエラーが発生する可能性があります。
+外部呼び出しはcontractまたはいくつかの他のcontractで悪意のあるコードを実行する可能性があります。
+したがって、すべての外部コールは潜在的なセキュリティリスクとして扱われ、可能であれば削除されるべきです。 外部コールを削除できない場合は、このセクションの残りのセクションの推奨事項を使用して危険を最小限に抑えてください。
 
 <a name="send-vs-call-value"></a>
 
-#### Be aware of the tradeoffs between `send()`, `transfer()`, and `call.value()()`
+#### `send()`、`transfer()`、`call.value()()`の間のトレードオフに注意
 
-When sending Ether be aware of the relative tradeoffs between the use of
-`someAddress.send()`, `someAddress.transfer()`, and `someAddress.call.value()()`.
+Etherを送信する時は `someAddress.send()`、 `someAddress.transfer()`、 `someAddress.call.value()()` の使用において、相対的なトレードオフに注意して下さい。
 
-- `x.transfer(y)` is equivalent to `require(x.send(y));` Send is the low level counterpart of transfer, and it's advisable to use transfer when possible.
-- `someAddress.send()`and `someAddress.transfer()` are considered *safe* against [reentrancy](#reentrancy).
-    While these methods still trigger code execution, the called contract is
-    only given a stipend of 2,300 gas which is currently only enough to log an
-    event.
-- `someAddress.call.value()()` will send the provided ether and trigger code
-    execution.  The executed code is given all available gas for execution
-    making this type of value transfer *unsafe* against reentrancy.
+- `x.transfer(y)` は `require(x.send(y));` と等価です。sendはtransferとは対称的に低レベルのものなので、可能な限りtransferを使うことをおすすめします。
+- `someAddress.send()` と `someAddress.transfer()` は[reentrancy](#reentrancy)に対して安全と考えられています。これらのメソッドがコード実行を引き起こしている間、呼び出されるcontractには、現在イベントを記録するのに十分な2,300gasの報酬のみが与えられます。
+- `someAddress.call.value（）（）`は、提供されたetherとトリガーコードの実行を送信します。実行されたコードには実行可能なすべてのガスが与えられており、このタイプの値の転送はreentrancyに対して安全ではありません。
 
-Using `send()` or `transfer()` will prevent reentrancy but it does so at the cost of being
-incompatible with any contract whose fallback function requires more than 2,300
-gas.
+`send()` や `transfer()` を使うとreentrancyを防ぐことができますが、フォールバック関数が2,300を超えるガスを必要とするいくつかのcontractと合わないコストを支払って行います。
 
-One pattern that attempts to balance this trade-off is to implement both
-a [*push* and *pull*](#favor-pull-over-push-payments) mechanism, using `send()` or `transfer()`
-for the *push* component and `call.value()()` for the *pull* component.
+このトレードオフのバランスを取る1つのパターンは、[*push* と *pull*](#favor-pull-over-push-payments)メカニズムの両方を実装することです。pushコンポーネントに対して `send（）` または `transfer（）` を使用し、pullコンポーネントに対して `call.value（）（）` を使用します。
 
-It is worth pointing out that exclusive use of `send()` or `transfer()` for value transfers
-does not itself make a contract safe against reentrancy, but only makes those
-specific value transfers safe against reentrancy.
-
+値の転送に `send（）`や `transfer（）` を排他的に使用することは、reentrancyに対して安全なcontractを作るのではなく、それらの特定の値の転送をreentrancyに対して安全にするだけです。
 
 <a name="handle-external-errors"></a>
 
