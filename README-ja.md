@@ -17,7 +17,7 @@
 - [セキュリティに関する告知](#security-notifications) 
 - [Recommendations for Smart Contract Security in Solidity](#recommendations-for-smart-contract-security-in-solidity)
   - [External Calls](#external-calls)
-  - [Enforce invariants with `assert()`](#enforce-invariants-with-assert)
+  - [`assert()` で恒常性を担保する](#enforce-invariants-with-assert)
   - [Use `assert()` and `require()` properly](#use-assert-and-require-properly)
   - [Beware rounding with integer division](#beware-rounding-with-integer-division)
   - [Remember that Ether can be forcibly sent to an account](#remember-that-ether-can-be-forcibly-sent-to-an-account)
@@ -320,10 +320,10 @@ function makeUntrustedWithdrawal(uint amount) {
 
 ### `assert()` で恒常性を担保する
 
-アサーション(表明)は、変更されないはずのプロパティが改ざんされた場合など、表明違反(assertion failure)が発生した場合にシステムを保護するトリガーとして機能します。
+アサーション(表明)は、変更されないはずのプロパティが改ざんされた場合など、表明違反(assertion failure)が発生した場合にシステムを保護するトリガーとして機能します。  
 一例としては、トークンとetherの供給比率検証やトークン供給コントラクト等に有効です。
-`assert()` を使用することで、対象の値が常に想定したものであることを検証できます。
-アサーションは、場合に応じてポージングやアップデート許可等のテクニックと併用すべきです。
+`assert()` を使用することで、対象の値が常に想定したものであることを検証できます。  
+アサーションは、場合に応じてポージングやアップデート許可等のテクニックと併用すべきです。  
 （そうしなければ、アサーションが常に失敗してしまう局面でも身動きが取れなくなってしまう可能性があります）
 
 実装例:
