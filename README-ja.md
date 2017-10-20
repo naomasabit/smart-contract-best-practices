@@ -318,11 +318,15 @@ function makeUntrustedWithdrawal(uint amount) {
 
 <a name="enforce-invariants-with-assert"></a>
 
-### Enforce invariants with `assert()`
+### `assert()` で恒常性を担保する
 
-An assert guard triggers when an assertion fails - such as an invariant property changing. For example, the token to ether issuance ratio, in a token issuance contract, may be fixed. You can verify that this is the case at all times with an `assert()`. Assert guards should often be combined with other techniques, such as pausing the contract and allowing upgrades. (Otherwise you may end up stuck, with an assertion that is always failing.)
+アサーション(表明)は、変更されないはずのプロパティが改ざんされた場合など、表明違反(assertion failure)が発生した場合にシステムを保護するトリガーとして機能します。
+一例としては、トークンとetherの供給比率検証やトークン供給コントラクト等に有効です。
+`assert()` を使用することで、対象の値が常に想定したものであることを検証できます。
+アサーションは、場合に応じてポージングやアップデート許可等のテクニックと併用すべきです。
+（そうしなければ、アサーションが常に失敗してしまう局面でも身動きが取れなくなってしまう可能性があります）
 
-Example:
+実装例:
 
 ```
 contract Token {
@@ -337,7 +341,7 @@ contract Token {
 }
 ```
 
-Note that the assertion is *not* a strict equality of the balance because the contract can be [forcibly sent ether](#ether-forcibly-sent) without going through the `deposit()` function!
+注意: このアサーションは厳密な検証では **ありません** 。コントラクトは `deposit()` ファンクションを介さずとも[強制的にetherを送信する](#ether-forcibly-sent)ことができるからです!
 
 
 ### Use `assert()` and `require()` properly
