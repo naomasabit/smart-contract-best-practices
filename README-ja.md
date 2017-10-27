@@ -18,7 +18,7 @@
 - [Recommendations for Smart Contract Security in Solidity](#recommendations-for-smart-contract-security-in-solidity)
   - [External Calls](#external-calls)
   - [`assert()` で恒常性を担保する](#enforce-invariants-with-assert)
-  - [Use `assert()` and `require()` properly](#use-assert-and-require-properly)
+  - [`assert()` と `require()` プロパティを使用する](#use-assert-and-require-properly)
   - [Beware rounding with integer division](#beware-rounding-with-integer-division)
   - [Remember that Ether can be forcibly sent to an account](#remember-that-ether-can-be-forcibly-sent-to-an-account)
   - [Don't assume contracts are created with zero balance](#dont-assume-contracts-are-created-with-zero-balance)
@@ -343,10 +343,14 @@ contract Token {
 
 注意: このアサーションは厳密な検証では **ありません** 。コントラクトは `deposit()` ファンクションを介さずとも[強制的にetherを送信する](#ether-forcibly-sent)ことができるからです!
 
+<a name="use-assert-and-require-properly"></a>
 
-### Use `assert()` and `require()` properly
+### `assert()` と `require()` プロパティを使用する
 
-In Solidity 0.4.10 `assert()` and `require()` were introduced. `require(condition)` is meant to be used for input validation, which should be done on any user input, and reverts if condition is false. `assert(condition)` also reverts if condition is false but should be used only for invariants: internal errors or to check if your contract has reached an invalid state. Following this paradigm allows formal analysis tools to verify that the invalid opcode can never be reached: meaning no invariants in the code are violated and that the code is formally verified.
+Solidity 0.4.10で `assert()` と `require()` が導入されました。  
+`require(condition)` は、もし `condifiton` がfalseであればrevertされます。すべてのユーザーの入力値にはこのバリデーションを利用すべきです。  
+`assert(condition)` も同様に、 `condition` がfalseである場合はrevertされます。しかし、こちらは内部エラーやコントラクトの異常を検知するために、不変であるべき値に対して使用します。  
+公式検証ツールがリーチできない `invalid opcode` を検証できるようにするため、これらの仕組みを使用してください。
 
 <a name="beware-rounding-with-integer-division"></a>
 
