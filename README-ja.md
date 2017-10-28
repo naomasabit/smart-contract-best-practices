@@ -19,7 +19,7 @@
   - [External Calls](#external-calls)
   - [`assert()` で恒常性を担保する](#enforce-invariants-with-assert)
   - [`assert()` と `require()` プロパティを使用する](#use-assert-and-require-properly)
-  - [Beware rounding with integer division](#beware-rounding-with-integer-division)
+  - [integer の小数点以下切り捨てに注意](#beware-rounding-with-integer-division)
   - [Remember that Ether can be forcibly sent to an account](#remember-that-ether-can-be-forcibly-sent-to-an-account)
   - [Don't assume contracts are created with zero balance](#dont-assume-contracts-are-created-with-zero-balance)
   - [Remember that on-chain data is public](#remember-that-on-chain-data-is-public)
@@ -354,15 +354,14 @@ Solidity 0.4.10で `assert()` と `require()` が導入されました。
 
 <a name="beware-rounding-with-integer-division"></a>
 
-### Beware rounding with integer division
+### integerの小数点以下切り捨てに注意
 
-All integer division rounds down to the nearest integer. If you need more precision, consider using a multiplier, or store both the numerator and denominator.
-
-(In the future, Solidity will have a fixed-point type, which will make this easier.)
+integerの小数点以下の値は切り捨てられます。より精度を求めるのであれば、掛け算(multiplier)を用いるか、分子(numerator)と分母(denominator)を保持してください。  
+（将来的にSolidityは、この種の計算をより容易に行えるように固定点:fixed-pointをサポートする予定です）
 
 ```
 // bad
-uint x = 5 / 2; // Result is 2, all integer divison rounds DOWN to the nearest integer
+uint x = 5 / 2; // 結果は2。 integerの小数点以下は常に切り捨てられます。
 
 // good
 uint multiplier = 10;
