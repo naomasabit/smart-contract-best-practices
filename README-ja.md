@@ -20,8 +20,8 @@
   - [`assert()` で恒常性を担保する](#enforce-invariants-with-assert)
   - [`assert()` と `require()` プロパティを使用する](#use-assert-and-require-properly)
   - [integer の小数点以下切り捨てに注意](#beware-rounding-with-integer-division)
-  - [Remember that Ether can be forcibly sent to an account](#remember-that-ether-can-be-forcibly-sent-to-an-account)
-  - [Don't assume contracts are created with zero balance](#dont-assume-contracts-are-created-with-zero-balance)
+  - [Etherを強制的に送信できることに注意](#remember-that-ether-can-be-forcibly-sent-to-an-account)
+  - [コントラクトが残高0Etherで作成されるとは限らない](#dont-assume-contracts-are-created-with-zero-balance)
   - [Remember that on-chain data is public](#remember-that-on-chain-data-is-public)
   - [Be aware of the tradeoffs between abstract contracts and interfaces](#be-aware-of-the-tradeoffs-between-abstract-contracts-and-interfaces)
   - [In 2-party or N-party contracts, beware of the possibility that some participants may "drop offline" and not return](#in-2-party-or-n-party-contracts-beware-of-the-possibility-that-some-participants-may-drop-offline-and-not-return)
@@ -371,21 +371,25 @@ uint numerator = 5;
 uint denominator = 2;
 ```
 
-<a name="ether-forcibly-sent"></a>
+<a name="remember-that-ether-can-be-forcibly-sent-to-an-account"></a>
 
-### Remember that Ether can be forcibly sent to an account
+### Etherを強制的に送信できることに注意
 
-Beware of coding an invariant that strictly checks the balance of a contract.
+コントラクトのEther残高(balance)を厳密にチェックするコードを書く場合は要注意です。
 
-An attacker can forcibly send wei to any account and this cannot be prevented (not even with a fallback function that does a `revert()`).
+攻撃者はEther(wei)を強制的に任意のアカウントに送信でき、しかもこれは防止することができません。(フォールバック関数 `revert()` であっても)
 
-The attacker can do this by creating a contract, funding it with 1 wei, and invoking
-`selfdestruct(victimAddress)`.  No code is invoked in `victimAddress`, so it
-cannot be prevented.
+攻撃者はコントラクトを作成し、1 weiだけそのコントラクトに保持させたのちに `selfdestruct(victimAddress)` を実行することでこの攻撃を実現できます。
+この場合、攻撃対象のアドレス( `victimAddress` )ではいかなるコードも実行されません。そのためこの攻撃は防止不可能です。
 
-### Don't assume contracts are created with zero balance
+<a name="dont-assume-contracts-are-created-with-zero-balance"></a>
 
-An attacker can send wei to the address of a contract before it is created.  Contracts should not assume that its initial state contains a zero balance.  See [issue 61](https://github.com/ConsenSys/smart-contract-best-practices/issues/61) for more details.
+### コントラクトが残高0Etherで作成されるとは限らない
+
+攻撃者はEther(wei)を、コントラクトが作成される前に送信しておくことが可能です。
+
+コントラクトは初期のEther残高がゼロであると思い込むべきではありません。詳細は [issue 61](https://github.com/ConsenSys/smart-contract-best-practices/issues/61) 
+を参照してください。
 
 ### Remember that on-chain data is public
 
