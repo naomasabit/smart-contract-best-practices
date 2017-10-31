@@ -22,7 +22,7 @@
   - [integer の小数点以下切り捨てに注意](#beware-rounding-with-integer-division)
   - [Etherを強制的に送信できることに注意](#remember-that-ether-can-be-forcibly-sent-to-an-account)
   - [コントラクトが残高0Etherで作成されるとは限らない](#dont-assume-contracts-are-created-with-zero-balance)
-  - [Remember that on-chain data is public](#remember-that-on-chain-data-is-public)
+  - [オンチェーンのデータはPublicであることに注意](#remember-that-on-chain-data-is-public)
   - [Be aware of the tradeoffs between abstract contracts and interfaces](#be-aware-of-the-tradeoffs-between-abstract-contracts-and-interfaces)
   - [In 2-party or N-party contracts, beware of the possibility that some participants may "drop offline" and not return](#in-2-party-or-n-party-contracts-beware-of-the-possibility-that-some-participants-may-drop-offline-and-not-return)
   - [Keep fallback functions simple](#keep-fallback-functions-simple)
@@ -391,16 +391,21 @@ uint denominator = 2;
 コントラクトは初期のEther残高がゼロであると思い込むべきではありません。詳細は [issue 61](https://github.com/ConsenSys/smart-contract-best-practices/issues/61) 
 を参照してください。
 
-### Remember that on-chain data is public
+<a name="remember-that-on-chain-data-is-public"></a>
 
-Many applications require submitted data to be private up until some point in time in order to work. Games (eg. on-chain rock-paper-scissors) and auction mechanisms (eg. sealed-bid second-price auctions) are two major categories of examples. If you are building an application where privacy is an issue, take care to avoid requiring users to publish information too early.
+### オンチェーンのデータはPublicであることに注意
 
-Examples:
+多くのアプリケーションで、送信されたデータを特定の時点まで隠蔽しておく必要があります。よくある例としては、ゲーム(例: じゃんけん)や、オークション(例: 封印入札方式、セカンドプライス・オークション)が挙げられます。
+もし情報の隠蔽が必要となるアプリケーションを作成するのであれば、ユーザが不適切なタイミングで情報を公開しないよう実装する必要があります。
 
-* In rock paper scissors, require both players to submit a hash of their intended move first, then require both players to submit their move; if the submitted move does not match the hash throw it out.
-* In an auction, require players to submit a hash of their bid value in an initial phase (along with a deposit greater than their bid value), and then submit their action bid value in the second phase.
-* When developing an application that depends on a random number generator, the order should always be (1) players submit moves, (2) random number generated, (3) players paid out. The method by which random numbers are generated is itself an area of active research; current best-in-class solutions include Bitcoin block headers (verified through http://btcrelay.org), hash-commit-reveal schemes (ie. one party generates a number, publishes its hash to "commit" to the value, and then reveals the value later) and [RANDAO](http://github.com/randao/randao).
-* If you are implementing a frequent batch auction, a hash-commit scheme is also desirable.
+
+例:
+
+* じゃんけんの場合、最初にまずお互いの出す手(グー、チョキ、パー)をハッシュ化したデータを送信し、次にお互いの実際の手を送信します。もし送信された実際の手にハッシュとの齟齬が生じる場合、無効とします。
+* オークションの場合、最初の段階でユーザーの指値価格をハッシュ化したデータを送信させます(それより前に指値価格よりも大きいデポジットが必要です)。次のフェーズで、実際の指値価格を送信させます。
+* 乱数生成器に依存するアプリケーションを作成する場合、その処理の流れは次のようであるべきです。 (1) ユーザの手を送信 (2) 乱数生成 (3) ユーザの支払い。
+  乱数生成の方法については活発な研究が行われています。現状で最良の解決策は、ビットコイン・ブロック・ヘッダ(http://btcrelay.org で検証済)、ハッシュ・コミット・公開スキーム(つまり、当事者の片方が乱数を生成し、そのハッシュを公開し、後で数値を明らかにする方法)、または[RANDAO](http://github.com/randao/randao)が挙げられます。
+* 高頻度バッチオークション(frequent batch auction)を実装する場合も、やはりハッシュ・コミットスキームが求められます。
 
 ### Be aware of the tradeoffs between abstract contracts and interfaces
 
