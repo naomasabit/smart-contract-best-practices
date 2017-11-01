@@ -184,8 +184,8 @@ Ethereumや複雑なブロックチェーンのプログラムは歴史が浅く
 #### 可能であれば外部呼び出しは避ける
 <a name="avoid-external-calls"></a>
 
-信頼されていないcontractsを呼び出すと、いくつかの予期しないリスクやエラーが発生する可能性があります。
-外部呼び出しはcontractまたはいくつかの他のcontractで悪意のあるコードを実行する可能性があります。
+信頼されていないコントラクトを呼び出すと、いくつかの予期しないリスクやエラーが発生する可能性があります。
+外部呼び出しはコントラクトまたはいくつかの他のコントラクトで悪意のあるコードを実行する可能性があります。
 したがって、すべての外部コールは潜在的なセキュリティリスクとして扱われ、可能であれば削除されるべきです。 外部コールを削除できない場合は、このセクションの残りのセクションの推奨事項を使用して危険を最小限に抑えてください。
 
 <a name="send-vs-call-value"></a>
@@ -195,14 +195,14 @@ Ethereumや複雑なブロックチェーンのプログラムは歴史が浅く
 Etherを送信する時は `someAddress.send()`、 `someAddress.transfer()`、 `someAddress.call.value()()` の使用において、相対的なトレードオフに注意して下さい。
 
 - `x.transfer(y)` は `require(x.send(y));` と等価です。sendはtransferとは対称的に低レベルのものなので、可能な限りtransferを使うことをおすすめします。
-- `someAddress.send()` と `someAddress.transfer()` は[reentrancy](#reentrancy)に対して安全と考えられています。これらのメソッドがコード実行を引き起こしている間、呼び出されるcontractには、現在イベントを記録するのに十分な2,300gasの報酬のみが与えられます。
+- `someAddress.send()` と `someAddress.transfer()` は[reentrancy](#reentrancy)に対して安全と考えられています。これらのメソッドがコード実行を引き起こしている間、呼び出されるコントラクトには、現在イベントを記録するのに十分な2,300gasの報酬のみが与えられます。
 - `someAddress.call.value（）（）`は、提供されたetherとトリガーコードの実行を送信します。実行されたコードには実行可能なすべてのガスが与えられており、このタイプの値の転送はreentrancyに対して安全ではありません。
 
-`send()` や `transfer()` を使うとreentrancyを防ぐことができますが、フォールバック関数が2,300を超えるガスを必要とするいくつかのcontractと合わないコストを支払って行います。
+`send()` や `transfer()` を使うとreentrancyを防ぐことができますが、フォールバック関数が2,300を超えるガスを必要とするいくつかのコントラクトと合わないコストを支払って行います。
 
 このトレードオフのバランスを取る1つのパターンは、[*push* と *pull*](#favor-pull-over-push-payments)メカニズムの両方を実装することです。pushコンポーネントに対して `send（）` または `transfer（）` を使用し、pullコンポーネントに対して `call.value（）（）` を使用します。
 
-値の転送に `send（）`や `transfer（）` を排他的に使用することは、reentrancyに対して安全なcontractを作るのではなく、それらの特定の値の転送をreentrancyに対して安全にするだけです。
+値の転送に `send（）`や `transfer（）` を排他的に使用することは、reentrancyに対して安全なコントラクトを作るのではなく、それらの特定の値の転送をreentrancyに対して安全にするだけです。
 
 <a name="handle-external-errors"></a>
 
@@ -210,7 +210,7 @@ Etherを送信する時は `someAddress.send()`、 `someAddress.transfer()`、 `
 
 Solidityは `address.call()`、`address.callcode()`、`address.delegatecall()` および `address.send` のようなローアドレスで動作する低レベルの呼び出しメソッドを提供します。
 これらの低レベルメソッドは決して例外をスローしませんが、呼び出しが例外を検出した場合は `false` を返します。
-一方で `ExternalContract.doSomething（）` などのcontract呼び出しは自動的にスローを広める(例えば `doSomething（）` がスローした場合には `ExternalContract.doSomething（）` も同様に例外をスローします。低レベルのコールメソッドを使用する場合は、戻り値をチェックすることによって、呼び出しが失敗する可能性を確実に処理してください。
+一方で `ExternalContract.doSomething（）` などのコントラクト呼び出しは自動的にスローを広める(例えば `doSomething（）` がスローした場合には `ExternalContract.doSomething（）` も同様に例外をスローします。低レベルのコールメソッドを使用する場合は、戻り値をチェックすることによって、呼び出しが失敗する可能性を確実に処理してください。
 
 ```
 // bad
@@ -290,9 +290,9 @@ contract auction {
 
 <a name="mark-untrusted-contracts"></a>
 
-#### 信用できないcontractsをマークする
+#### 信用できないコントラクトをマークする
 
-外部contractsと対話するときは、変数、メソッド、およびコントラクト・インターフェースに、それらとのインタラクションが潜在的に危険なものであることを明確にするような名前を付けます。
+外部コントラクトと対話するときは、変数、メソッド、およびコントラクト・インターフェースに、それらとのインタラクションが潜在的に危険なものであることを明確にするような名前を付けます。
 
 ```
 // bad
@@ -304,7 +304,7 @@ function makeWithdrawal(uint amount) { // この機能が潜在的に危険で�
 
 // good
 UntrustedBank.withdraw(100); // 信用できない外部呼び出し
-TrustedBank.withdraw(100); // XYZ社によってメンテナンスされた外部の信用銀行contract
+TrustedBank.withdraw(100); // XYZ社によってメンテナンスされた外部の信用銀行コントラクト
 
 function makeUntrustedWithdrawal(uint amount) {
     UntrustedBank.withdraw(amount);
