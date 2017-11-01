@@ -290,21 +290,21 @@ contract auction {
 
 <a name="mark-untrusted-contracts"></a>
 
-#### Mark untrusted contracts
+#### 信用できないcontractsをマークする
 
-When interacting with external contracts, name your variables, methods, and contract interfaces in a way that makes it clear that interacting with them is potentially unsafe. This applies to your own functions that call external contracts.
+外部contractsと対話するときは、変数、メソッド、およびコントラクト・インターフェースに、それらとのインタラクションが潜在的に危険なものであることを明確にするような名前を付けます。
 
 ```
 // bad
-Bank.withdraw(100); // Unclear whether trusted or untrusted
+Bank.withdraw(100); // 信用できるかどうかは不明
 
-function makeWithdrawal(uint amount) { // Isn't clear that this function is potentially unsafe
+function makeWithdrawal(uint amount) { // この機能が潜在的に危険であることが明らかでない
     Bank.withdraw(amount);
 }
 
 // good
-UntrustedBank.withdraw(100); // untrusted external call
-TrustedBank.withdraw(100); // external but trusted bank contract maintained by XYZ Corp
+UntrustedBank.withdraw(100); // 信用できない外部呼び出し
+TrustedBank.withdraw(100); // XYZ社によってメンテナンスされた外部の信用銀行contract
 
 function makeUntrustedWithdrawal(uint amount) {
     UntrustedBank.withdraw(amount);
