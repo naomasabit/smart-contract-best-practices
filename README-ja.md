@@ -17,13 +17,13 @@
 - [セキュリティに関する告知](#security-notifications) 
 - [Solidityにおけるスマートコントラクトセキュリティための推奨事項](#recommendations-for-smart-contract-security-in-solidity)
   - [外部呼び出し](#external-calls)
-  - [Enforce invariants with `assert()`](#enforce-invariants-with-assert)
-  - [Use `assert()` and `require()` properly](#use-assert-and-require-properly)
-  - [Beware rounding with integer division](#beware-rounding-with-integer-division)
-  - [Remember that Ether can be forcibly sent to an account](#remember-that-ether-can-be-forcibly-sent-to-an-account)
-  - [Don't assume contracts are created with zero balance](#dont-assume-contracts-are-created-with-zero-balance)
-  - [Remember that on-chain data is public](#remember-that-on-chain-data-is-public)
-  - [Be aware of the tradeoffs between abstract contracts and interfaces](#be-aware-of-the-tradeoffs-between-abstract-contracts-and-interfaces)
+  - [`assert()` で恒常性を担保する](#enforce-invariants-with-assert)
+  - [`assert()` と `require()` プロパティを使用する](#use-assert-and-require-properly)
+  - [integer の小数点以下切り捨てに注意](#beware-rounding-with-integer-division)
+  - [Etherを強制的に送信できることに注意](#remember-that-ether-can-be-forcibly-sent-to-an-account)
+  - [コントラクトが残高0Etherで作成されるとは限らない](#dont-assume-contracts-are-created-with-zero-balance)
+  - [オンチェーンのデータはPublicであることに注意](#remember-that-on-chain-data-is-public)
+  - [抽象コントラクトとインターフェースとのトレードオフに注意](#be-aware-of-the-tradeoffs-between-abstract-contracts-and-interfaces)
   - [In 2-party or N-party contracts, beware of the possibility that some participants may "drop offline" and not return](#in-2-party-or-n-party-contracts-beware-of-the-possibility-that-some-participants-may-drop-offline-and-not-return)
   - [Keep fallback functions simple](#keep-fallback-functions-simple)
   - [Explicitly mark visibility in functions and state variables](#explicitly-mark-visibility-in-functions-and-state-variables)
@@ -313,11 +313,15 @@ function makeUntrustedWithdrawal(uint amount) {
 
 <a name="enforce-invariants-with-assert"></a>
 
-### Enforce invariants with `assert()`
+### `assert()` で恒常性を担保する
 
-An assert guard triggers when an assertion fails - such as an invariant property changing. For example, the token to ether issuance ratio, in a token issuance contract, may be fixed. You can verify that this is the case at all times with an `assert()`. Assert guards should often be combined with other techniques, such as pausing the contract and allowing upgrades. (Otherwise you may end up stuck, with an assertion that is always failing.)
+アサーション(表明)は、変更されないはずのプロパティが改ざんされた場合など、表明違反(assertion failure)が発生した場合にシステムを保護するトリガーとして機能します。  
+一例としては、トークンとetherの供給比率検証やトークン供給コントラクト等に有効です。
+`assert()` を使用することで、対象の値が常に想定したものであることを検証できます。  
+アサーションは、場合に応じてポージングやアップデート許可等のテクニックと併用すべきです。  
+（そうしなければ、アサーションが常に失敗してしまう局面でも身動きが取れなくなってしまう可能性があります）
 
-Example:
+実装例:
 
 ```
 contract Token {
@@ -332,24 +336,27 @@ contract Token {
 }
 ```
 
-Note that the assertion is *not* a strict equality of the balance because the contract can be [forcibly sent ether](#ether-forcibly-sent) without going through the `deposit()` function!
+注意: このアサーションは厳密な検証では **ありません** 。コントラクトは `deposit()` ファンクションを介さずとも[強制的にetherを送信する](#ether-forcibly-sent)ことができるからです!
 
+<a name="use-assert-and-require-properly"></a>
 
-### Use `assert()` and `require()` properly
+### `assert()` と `require()` プロパティを使用する
 
-In Solidity 0.4.10 `assert()` and `require()` were introduced. `require(condition)` is meant to be used for input validation, which should be done on any user input, and reverts if condition is false. `assert(condition)` also reverts if condition is false but should be used only for invariants: internal errors or to check if your contract has reached an invalid state. Following this paradigm allows formal analysis tools to verify that the invalid opcode can never be reached: meaning no invariants in the code are violated and that the code is formally verified.
+Solidity 0.4.10で `assert()` と `require()` が導入されました。  
+`require(condition)` は、もし `condifiton` がfalseであればrevertされます。すべてのユーザーの入力値にはこのバリデーションを利用すべきです。  
+`assert(condition)` も同様に、 `condition` がfalseである場合はrevertされます。しかし、こちらは内部エラーやコントラクトの異常を検知するために、不変であるべき値に対して使用します。  
+公式検証ツールがリーチできない `invalid opcode` を検証できるようにするため、これらの仕組みを使用してください。
 
 <a name="beware-rounding-with-integer-division"></a>
 
-### Beware rounding with integer division
+### integerの小数点以下切り捨てに注意
 
-All integer division rounds down to the nearest integer. If you need more precision, consider using a multiplier, or store both the numerator and denominator.
-
-(In the future, Solidity will have a fixed-point type, which will make this easier.)
+integerの小数点以下の値は切り捨てられます。より精度を求めるのであれば、掛け算(multiplier)を用いるか、分子(numerator)と分母(denominator)を保持してください。  
+（将来的にSolidityは、この種の計算をより容易に行えるように固定点:fixed-pointをサポートする予定です）
 
 ```
 // bad
-uint x = 5 / 2; // Result is 2, all integer divison rounds DOWN to the nearest integer
+uint x = 5 / 2; // 結果は2。 integerの小数点以下は常に切り捨てられます。
 
 // good
 uint multiplier = 10;
@@ -359,36 +366,47 @@ uint numerator = 5;
 uint denominator = 2;
 ```
 
-<a name="ether-forcibly-sent"></a>
+<a name="remember-that-ether-can-be-forcibly-sent-to-an-account"></a>
 
-### Remember that Ether can be forcibly sent to an account
+### Etherを強制的に送信できることに注意
 
-Beware of coding an invariant that strictly checks the balance of a contract.
+コントラクトのEther残高(balance)を厳密にチェックするコードを書く場合は要注意です。
 
-An attacker can forcibly send wei to any account and this cannot be prevented (not even with a fallback function that does a `revert()`).
+攻撃者はEther(wei)を強制的に任意のアカウントに送信でき、しかもこれは防止することができません。(フォールバック関数 `revert()` であっても)
 
-The attacker can do this by creating a contract, funding it with 1 wei, and invoking
-`selfdestruct(victimAddress)`.  No code is invoked in `victimAddress`, so it
-cannot be prevented.
+攻撃者はコントラクトを作成し、1 weiだけそのコントラクトに保持させたのちに `selfdestruct(victimAddress)` を実行することでこの攻撃を実現できます。
+この場合、攻撃対象のアドレス( `victimAddress` )ではいかなるコードも実行されません。そのためこの攻撃は防止不可能です。
 
-### Don't assume contracts are created with zero balance
+<a name="dont-assume-contracts-are-created-with-zero-balance"></a>
 
-An attacker can send wei to the address of a contract before it is created.  Contracts should not assume that its initial state contains a zero balance.  See [issue 61](https://github.com/ConsenSys/smart-contract-best-practices/issues/61) for more details.
+### コントラクトが残高0Etherで作成されるとは限らない
 
-### Remember that on-chain data is public
+攻撃者はEther(wei)を、コントラクトが作成される前に送信しておくことが可能です。
 
-Many applications require submitted data to be private up until some point in time in order to work. Games (eg. on-chain rock-paper-scissors) and auction mechanisms (eg. sealed-bid second-price auctions) are two major categories of examples. If you are building an application where privacy is an issue, take care to avoid requiring users to publish information too early.
+コントラクトは初期のEther残高がゼロであると思い込むべきではありません。詳細は [issue 61](https://github.com/ConsenSys/smart-contract-best-practices/issues/61) 
+を参照してください。
 
-Examples:
+<a name="remember-that-on-chain-data-is-public"></a>
 
-* In rock paper scissors, require both players to submit a hash of their intended move first, then require both players to submit their move; if the submitted move does not match the hash throw it out.
-* In an auction, require players to submit a hash of their bid value in an initial phase (along with a deposit greater than their bid value), and then submit their action bid value in the second phase.
-* When developing an application that depends on a random number generator, the order should always be (1) players submit moves, (2) random number generated, (3) players paid out. The method by which random numbers are generated is itself an area of active research; current best-in-class solutions include Bitcoin block headers (verified through http://btcrelay.org), hash-commit-reveal schemes (ie. one party generates a number, publishes its hash to "commit" to the value, and then reveals the value later) and [RANDAO](http://github.com/randao/randao).
-* If you are implementing a frequent batch auction, a hash-commit scheme is also desirable.
+### オンチェーンのデータはPublicであることに注意
 
-### Be aware of the tradeoffs between abstract contracts and interfaces
+多くのアプリケーションで、送信されたデータを特定の時点まで隠蔽しておく必要があります。よくある例としては、ゲーム(例: じゃんけん)や、オークション(例: 封印入札方式、セカンドプライス・オークション)が挙げられます。
+もし情報の隠蔽が必要となるアプリケーションを作成するのであれば、ユーザが不適切なタイミングで情報を公開しないよう実装する必要があります。
 
-Both interfaces and abstract contracts provide one with a customizable and re-usable approach for smart contracts. Interfaces, which were introduced in Solidity 0.4.11, are similar to abstract contracts but cannot have any functions implemented. Interfaces also have limitations such as not being able to access storage or inherit from other interfaces which generally makes abstract contracts more practical. Although, Interfaces are certainly useful for designing contracts prior to implementation. Additionally, it is important to keep in mind that if a contract inherits from an abstract contract it must implement all non-implemented functions via overriding or it will be abstract as well.
+
+例:
+
+* じゃんけんの場合、最初にまずお互いの出す手(グー、チョキ、パー)をハッシュ化したデータを送信し、次にお互いの実際の手を送信します。もし送信された実際の手にハッシュとの齟齬が生じる場合、無効とします。
+* オークションの場合、最初の段階でユーザーの指値価格をハッシュ化したデータを送信させます(それより前に指値価格よりも大きいデポジットが必要です)。次のフェーズで、実際の指値価格を送信させます。
+* 乱数生成器に依存するアプリケーションを作成する場合、その処理の流れは次のようであるべきです。 (1) ユーザの手を送信 (2) 乱数生成 (3) ユーザの支払い。
+  乱数生成の方法については活発な研究が行われています。現状で最良の解決策は、ビットコイン・ブロック・ヘッダ(http://btcrelay.org で検証済)、ハッシュ・コミット・公開スキーム(つまり、当事者の片方が乱数を生成し、そのハッシュを公開し、後で数値を明らかにする方法)、または[RANDAO](http://github.com/randao/randao)が挙げられます。
+* 高頻度バッチオークション(frequent batch auction)を実装する場合も、やはりハッシュ・コミットスキームが求められます。
+
+<a name="be-aware-of-the-tradeoffs-between-abstract-contracts-and-interfaces"></a>
+
+### 抽象コントラクトとインターフェースとのトレードオフに注意
+
+抽象コントラクトとインターフェイスは、ともにスマートコントラクトの再利用性とカスタマイズ性を高めるためのアプローチです。インターフェイスはSolidity 0.4.11で実装された、抽象コントラクトに類似した概念ですが、関数を実装することができません。他にも、ストレージにアクセスできない、一般的に抽象コントラクトをより実用的にするために利用する、等の制限があります。しかしインターフェイスは、実際にコントラクトを実装する前の設計段階において有用です。またコントラクトを抽象コントラクトとするのではない限り、抽象コントラクトを実装したコントラクトは必ず未実装の関数をオーバーライドによって実装しなければならず、それを強制するためにも役立ちます。
 
 ### In 2-party or N-party contracts, beware of the possibility that some participants may "drop offline" and not return
 
