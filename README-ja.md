@@ -23,7 +23,7 @@
   - [Etherを強制的に送信できることに注意](#remember-that-ether-can-be-forcibly-sent-to-an-account)
   - [コントラクトが残高0Etherで作成されるとは限らない](#dont-assume-contracts-are-created-with-zero-balance)
   - [オンチェーンのデータはPublicであることに注意](#remember-that-on-chain-data-is-public)
-  - [Be aware of the tradeoffs between abstract contracts and interfaces](#be-aware-of-the-tradeoffs-between-abstract-contracts-and-interfaces)
+  - [抽象コントラクトとインターフェースとのトレードオフに注意](#be-aware-of-the-tradeoffs-between-abstract-contracts-and-interfaces)
   - [In 2-party or N-party contracts, beware of the possibility that some participants may "drop offline" and not return](#in-2-party-or-n-party-contracts-beware-of-the-possibility-that-some-participants-may-drop-offline-and-not-return)
   - [Keep fallback functions simple](#keep-fallback-functions-simple)
   - [Explicitly mark visibility in functions and state variables](#explicitly-mark-visibility-in-functions-and-state-variables)
@@ -407,9 +407,11 @@ uint denominator = 2;
   乱数生成の方法については活発な研究が行われています。現状で最良の解決策は、ビットコイン・ブロック・ヘッダ(http://btcrelay.org で検証済)、ハッシュ・コミット・公開スキーム(つまり、当事者の片方が乱数を生成し、そのハッシュを公開し、後で数値を明らかにする方法)、または[RANDAO](http://github.com/randao/randao)が挙げられます。
 * 高頻度バッチオークション(frequent batch auction)を実装する場合も、やはりハッシュ・コミットスキームが求められます。
 
-### Be aware of the tradeoffs between abstract contracts and interfaces
+<a name="be-aware-of-the-tradeoffs-between-abstract-contracts-and-interfaces"></a>
 
-Both interfaces and abstract contracts provide one with a customizable and re-usable approach for smart contracts. Interfaces, which were introduced in Solidity 0.4.11, are similar to abstract contracts but cannot have any functions implemented. Interfaces also have limitations such as not being able to access storage or inherit from other interfaces which generally makes abstract contracts more practical. Although, Interfaces are certainly useful for designing contracts prior to implementation. Additionally, it is important to keep in mind that if a contract inherits from an abstract contract it must implement all non-implemented functions via overriding or it will be abstract as well.
+### 抽象コントラクトとインターフェースとのトレードオフに注意
+
+抽象コントラクトとインターフェイスは、ともにスマートコントラクトの再利用性とカスタマイズ性を高めるためのアプローチです。インターフェイスはSolidity 0.4.11で実装された、抽象コントラクトに類似した概念ですが、関数を実装することができません。他にも、ストレージにアクセスできない、一般的に抽象コントラクトをより実用的にするために利用する、等の制限があります。しかしインターフェイスは、実際にコントラクトを実装する前の設計段階において有用です。またコントラクトを抽象コントラクトとするのではない限り、抽象コントラクトを実装したコントラクトは必ず未実装の関数をオーバーライドによって実装しなければならず、それを強制するためにも役立ちます。
 
 ### In 2-party or N-party contracts, beware of the possibility that some participants may "drop offline" and not return
 
