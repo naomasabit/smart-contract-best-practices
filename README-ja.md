@@ -237,9 +237,12 @@ ExternalContract(someAddress).deposit.value(100);
 
 <a name="favor-pull-over-push-payments"></a>
 
-#### Favor *pull* over *push* for external calls
+#### 外部呼び出しのための外部呼び出しのためのプッシュプルオーバープッシュ
 
-External calls can fail accidentally or deliberately. To minimize the damage caused by such failures, it is often better to isolate each external call into its own transaction that can be initiated by the recipient of the call. This is especially relevant for payments, where it is better to let users withdraw funds rather than push funds to them automatically. (This also reduces the chance of [problems with the gas limit](https://github.com/ConsenSys/smart-contract-best-practices/#dos-with-block-gas-limit).)  Avoid combining multiple `send()` calls in a single transaction.
+外部呼び出しが誤って、または意図的に失敗する可能性があります。
+このような障害によって引き起こされる被害を最小限に抑えるには、各外部呼び出しを呼び出しの受信者が開始できる独自のトランザクションに分離する方がよい場合があります。
+これは、支払いに特に関連します。ユーザーが自動的に資金を押し出すのではなく、資金を引き出すことをお勧めします。
+(これにより[gas limit問題](https://github.com/ConsenSys/smart-contract-best-practices/#dos-with-block-gas-limit)の可能性が減ります。)単一のトランザクションで複数の `send（）` 呼び出しを組み合わせることは避けてください。
 
 ```
 // bad
@@ -251,7 +254,7 @@ contract auction {
         require(msg.value >= highestBid);
 
         if (highestBidder != 0) {
-            require(highestBidder.send(highestBid)) // if this call consistently fails, no one else can bid
+            require(highestBidder.send(highestBid)) // この呼び出しが絶えず失敗した場合、誰も入札できません
         }
 
        highestBidder = msg.sender;
@@ -269,7 +272,7 @@ contract auction {
         require(msg.value >= highestBid);
 
         if (highestBidder != 0) {
-            refunds[highestBidder] += highestBid; // record the refund that this user can claim
+            refunds[highestBidder] += highestBid; // このユーザーが請求できる払い戻しを記録します
         }
 
         highestBidder = msg.sender;
@@ -279,7 +282,7 @@ contract auction {
     function withdrawRefund() external {
         uint refund = refunds[msg.sender];
         refunds[msg.sender] = 0;
-        require(msg.sender.send(refund)); // revert state if send fails
+        require(msg.sender.send(refund)); // 送信失敗の場合は状態を元に戻す
         }
     }
 }
