@@ -228,9 +228,12 @@ ExternalContract(someAddress).deposit.value(100);
 
 <a name="expect-control-flow-loss"></a>
 
-#### Don't make control flow assumptions after external calls
+#### 外部呼び出し後に制御フローを仮定するな
 
-Whether using *raw calls* or *contract calls*, assume that malicious code will execute if `ExternalContract` is untrusted. Even if `ExternalContract` is not malicious, malicious code can be executed by any contracts *it* calls. One particular danger is malicious code may hijack the control flow, leading to race conditions. (See [Race Conditions](https://github.com/ConsenSys/smart-contract-best-practices/#race-conditions) for a fuller discussion of this problem).
+未処理の呼び出しや契約の呼び出しを使用する場合は、`ExternalContract`が信頼できない場合に悪質なコードが実行されることを想定します。
+`ExternalContract`が悪意のあるものではないとしても、呼び出す契約によって悪質なコードが実行される可能性があります。
+特に危険なのは、悪質なコードが制御フローを乗っ取ってレースコンディションに陥ることです。
+(この問題の詳細な議論については[Race Conditions](https://github.com/ConsenSys/smart-contract-best-practices/#race-conditions)を参照して下さい)。
 
 <a name="favor-pull-over-push-payments"></a>
 
