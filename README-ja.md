@@ -206,21 +206,21 @@ Etherを送信する時は `someAddress.send()`、 `someAddress.transfer()`、 `
 
 <a name="handle-external-errors"></a>
 
-#### Handle errors in external calls
+#### 外部呼び出しのエラーハンドリング
 
-Solidity offers low-level call methods that work on raw addresses: `address.call()`, `address.callcode()`, `address.delegatecall()`, and `address.send`. These low-level methods never throw an exception, but will return `false` if the call encounters an exception. On the other hand, *contract calls* (e.g., `ExternalContract.doSomething()`) will automatically propagate a throw (for example, `ExternalContract.doSomething()` will also `throw` if `doSomething()` throws).
-
-If you choose to use the low-level call methods, make sure to handle the possibility that the call will fail, by checking the return value.
+Solidityは `address.call()`、`address.callcode()`、`address.delegatecall()` および `address.send` のようなローアドレスで動作する低レベルの呼び出しメソッドを提供します。
+これらの低レベルメソッドは決して例外をスローしませんが、呼び出しが例外を検出した場合は `false` を返します。
+一方で `ExternalContract.doSomething（）` などのcontract呼び出しは自動的にスローを広める(例えば `doSomething（）` がスローした場合には `ExternalContract.doSomething（）` も同様に例外をスローします。低レベルのコールメソッドを使用する場合は、戻り値をチェックすることによって、呼び出しが失敗する可能性を確実に処理してください。
 
 ```
 // bad
 someAddress.send(55);
-someAddress.call.value(55)(); // this is doubly dangerous, as it will forward all remaining gas and doesn't check for result
-someAddress.call.value(100)(bytes4(sha3("deposit()"))); // if deposit throws an exception, the raw call() will only return false and transaction will NOT be reverted
+someAddress.call.value(55)(); // すべての残りのガスを送り、結果をチェックしないため二重に危険です
+someAddress.call.value(100)(bytes4(sha3("deposit()"))); // depositが例外をスローすると、raw call() はfalseを返すだけでトランザクションはもとに戻されません
 
 // good
 if(!someAddress.send(55)) {
-    // Some failure code
+    // いくつかの失敗コード
 }
 
 ExternalContract(someAddress).deposit.value(100);
