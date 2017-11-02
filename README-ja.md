@@ -15,8 +15,8 @@
 - [一般的な知識](#general-philosophy)
   - [根本的なトレードオフ: シンプル vs 複雑](#fundamental-tradeoffs-simplicity-versus-complexity-cases)
 - [セキュリティに関する告知](#security-notifications) 
-- [Recommendations for Smart Contract Security in Solidity](#recommendations-for-smart-contract-security-in-solidity)
-  - [External Calls](#external-calls)
+- [Solidityにおけるスマートコントラクトセキュリティための推奨事項](#recommendations-for-smart-contract-security-in-solidity)
+  - [外部呼び出し](#external-calls)
   - [`assert()` で恒常性を担保する](#enforce-invariants-with-assert)
   - [`assert()` と `require()` プロパティを使用する](#use-assert-and-require-properly)
   - [integer の小数点以下切り捨てに注意](#beware-rounding-with-integer-division)
@@ -177,61 +177,50 @@ Ethereumや複雑なブロックチェーンのプログラムは歴史が浅く
 
 <a name="solidity-tips"></a>
 
-## Recommendations for Smart Contract Security in Solidity
+## Solidityにおけるスマートコントラクトセキュリティための推奨事項
 
-### External Calls
+### 外部呼び出し
 
-#### Avoid external calls when possible
+#### 可能であれば外部呼び出しは避ける
 <a name="avoid-external-calls"></a>
 
-Calls to untrusted contracts can introduce several unexpected risks or errors. External calls may execute malicious code in that contract _or_ any other contract that it depends upon. As such, every external call should be treated as a potential security risk, and removed if possible. When it is not possible to remove external calls, use the recommendations in the rest of this section to minimize the danger.
+信頼されていないコントラクトを呼び出すと、いくつかの予期しないリスクやエラーが発生する可能性があります。
+外部呼び出しはコントラクトや依存する他のコントラクトで悪意のあるコードを実行する可能性があります。
+したがって、すべての外部コールは潜在的なセキュリティリスクとして扱われ、可能であれば削除されるべきです。 外部コールを削除できない場合は、このセクションの残りのセクションの推奨事項を使用して危険を最小限に抑えてください。
 
 <a name="send-vs-call-value"></a>
 
-#### Be aware of the tradeoffs between `send()`, `transfer()`, and `call.value()()`
+#### `send()`、`transfer()`、`call.value()()`の間のトレードオフに注意
 
-When sending Ether be aware of the relative tradeoffs between the use of
-`someAddress.send()`, `someAddress.transfer()`, and `someAddress.call.value()()`.
+Etherを送信する時は `someAddress.send()`、 `someAddress.transfer()`、 `someAddress.call.value()()` の使用において、相対的なトレードオフに注意して下さい。
 
-- `x.transfer(y)` is equivalent to `require(x.send(y));` Send is the low level counterpart of transfer, and it's advisable to use transfer when possible.
-- `someAddress.send()`and `someAddress.transfer()` are considered *safe* against [reentrancy](#reentrancy).
-    While these methods still trigger code execution, the called contract is
-    only given a stipend of 2,300 gas which is currently only enough to log an
-    event.
-- `someAddress.call.value()()` will send the provided ether and trigger code
-    execution.  The executed code is given all available gas for execution
-    making this type of value transfer *unsafe* against reentrancy.
+- `x.transfer(y)` は `require(x.send(y));` と等価です。sendはtransferとは対称的に低レベルのものなので、可能な限りtransferを使うことをおすすめします。
+- `someAddress.send()` と `someAddress.transfer()` は[reentrancy](#reentrancy)に対して安全と考えられています。これらのメソッドがコード実行を引き起こしている間、呼び出されるコントラクトには、現在イベントを記録するのに十分な2,300gasの報酬のみが与えられます。
+- `someAddress.call.value（）（）`は、提供されたetherとトリガーコードの実行を送信します。実行されたコードには実行可能なすべてのガスが与えられており、このタイプの値の転送はreentrancyに対して安全ではありません。
 
-Using `send()` or `transfer()` will prevent reentrancy but it does so at the cost of being
-incompatible with any contract whose fallback function requires more than 2,300
-gas.
+`send()` や `transfer()` を使うとreentrancyを防ぐことができますが、フォールバック関数が2,300を超えるガスを必要とするいくつかのコントラクトと合わないコストを支払って行います。
 
-One pattern that attempts to balance this trade-off is to implement both
-a [*push* and *pull*](#favor-pull-over-push-payments) mechanism, using `send()` or `transfer()`
-for the *push* component and `call.value()()` for the *pull* component.
+このトレードオフのバランスを取る1つのパターンは、[*push* と *pull*](#favor-pull-over-push-payments)メカニズムの両方を実装することです。pushコンポーネントに対して `send（）` または `transfer（）` を使用し、pullコンポーネントに対して `call.value（）（）` を使用します。
 
-It is worth pointing out that exclusive use of `send()` or `transfer()` for value transfers
-does not itself make a contract safe against reentrancy, but only makes those
-specific value transfers safe against reentrancy.
-
+値の転送に `send（）`や `transfer（）` を排他的に使用することは、reentrancyに対して安全なコントラクトを作るのではなく、それらの特定の値の転送をreentrancyに対して安全にするだけです。
 
 <a name="handle-external-errors"></a>
 
-#### Handle errors in external calls
+#### 外部呼び出しのエラーハンドリング
 
-Solidity offers low-level call methods that work on raw addresses: `address.call()`, `address.callcode()`, `address.delegatecall()`, and `address.send`. These low-level methods never throw an exception, but will return `false` if the call encounters an exception. On the other hand, *contract calls* (e.g., `ExternalContract.doSomething()`) will automatically propagate a throw (for example, `ExternalContract.doSomething()` will also `throw` if `doSomething()` throws).
-
-If you choose to use the low-level call methods, make sure to handle the possibility that the call will fail, by checking the return value.
+Solidityは `address.call()`、`address.callcode()`、`address.delegatecall()` および `address.send` のようなローアドレスで動作する低レベルの呼び出しメソッドを提供します。
+これらの低レベルメソッドは決して例外をスローしませんが、呼び出しが例外を検出した場合は `false` を返します。
+一方で `ExternalContract.doSomething（）` などのコントラクト呼び出しは自動的にスローを広める(例えば `doSomething（）` がスローした場合には `ExternalContract.doSomething（）` も同様に例外をスローします。低レベルのコールメソッドを使用する場合は、戻り値をチェックすることによって、呼び出しが失敗する可能性を確実に処理してください。
 
 ```
 // bad
 someAddress.send(55);
-someAddress.call.value(55)(); // this is doubly dangerous, as it will forward all remaining gas and doesn't check for result
-someAddress.call.value(100)(bytes4(sha3("deposit()"))); // if deposit throws an exception, the raw call() will only return false and transaction will NOT be reverted
+someAddress.call.value(55)(); // すべての残りのガスを送り、結果をチェックしないため二重に危険です
+someAddress.call.value(100)(bytes4(sha3("deposit()"))); // depositが例外をスローすると、raw call() はfalseを返すだけでトランザクションはもとに戻されません
 
 // good
 if(!someAddress.send(55)) {
-    // Some failure code
+    // いくつかの失敗コード
 }
 
 ExternalContract(someAddress).deposit.value(100);
@@ -239,15 +228,21 @@ ExternalContract(someAddress).deposit.value(100);
 
 <a name="expect-control-flow-loss"></a>
 
-#### Don't make control flow assumptions after external calls
+#### 外部呼び出し後に制御フローを仮定するな
 
-Whether using *raw calls* or *contract calls*, assume that malicious code will execute if `ExternalContract` is untrusted. Even if `ExternalContract` is not malicious, malicious code can be executed by any contracts *it* calls. One particular danger is malicious code may hijack the control flow, leading to race conditions. (See [Race Conditions](https://github.com/ConsenSys/smart-contract-best-practices/#race-conditions) for a fuller discussion of this problem).
+未処理の呼び出しやコントラクトの呼び出しを使用する場合は、`ExternalContract`が信頼できない場合に悪質なコードが実行されることを想定します。
+`ExternalContract`が悪意のあるものではないとしても、呼び出すコントラクトによって悪質なコードが実行される可能性があります。
+特に危険なのは、悪質なコードが制御フローを乗っ取ってレースコンディションに陥ることです。
+(この問題の詳細な議論については[Race Conditions](https://github.com/ConsenSys/smart-contract-best-practices/#race-conditions)を参照して下さい)。
 
 <a name="favor-pull-over-push-payments"></a>
 
-#### Favor *pull* over *push* for external calls
+#### 外部呼び出しのためのプッシュプルオーバープッシュ
 
-External calls can fail accidentally or deliberately. To minimize the damage caused by such failures, it is often better to isolate each external call into its own transaction that can be initiated by the recipient of the call. This is especially relevant for payments, where it is better to let users withdraw funds rather than push funds to them automatically. (This also reduces the chance of [problems with the gas limit](https://github.com/ConsenSys/smart-contract-best-practices/#dos-with-block-gas-limit).)  Avoid combining multiple `send()` calls in a single transaction.
+外部呼び出しが誤って、または意図的に失敗する可能性があります。
+このような障害によって引き起こされる被害を最小限に抑えるには、各外部呼び出しを呼び出しの受信者が開始できる独自のトランザクションに分離する方がよい場合があります。
+これは、支払いに特に関連します。ユーザーが自動的に資金を押し出すのではなく、資金を引き出すことをお勧めします。
+(これにより[gas limit問題](https://github.com/ConsenSys/smart-contract-best-practices/#dos-with-block-gas-limit)の可能性が減ります。)単一のトランザクションで複数の `send（）` 呼び出しを組み合わせることは避けてください。
 
 ```
 // bad
@@ -259,7 +254,7 @@ contract auction {
         require(msg.value >= highestBid);
 
         if (highestBidder != 0) {
-            require(highestBidder.send(highestBid)) // if this call consistently fails, no one else can bid
+            require(highestBidder.send(highestBid)) // この呼び出しが絶えず失敗した場合、誰も入札できません
         }
 
        highestBidder = msg.sender;
@@ -277,7 +272,7 @@ contract auction {
         require(msg.value >= highestBid);
 
         if (highestBidder != 0) {
-            refunds[highestBidder] += highestBid; // record the refund that this user can claim
+            refunds[highestBidder] += highestBid; // このユーザーが請求できる払い戻しを記録します
         }
 
         highestBidder = msg.sender;
@@ -287,7 +282,7 @@ contract auction {
     function withdrawRefund() external {
         uint refund = refunds[msg.sender];
         refunds[msg.sender] = 0;
-        require(msg.sender.send(refund)); // revert state if send fails
+        require(msg.sender.send(refund)); // 送信失敗の場合は状態を元に戻す
         }
     }
 }
@@ -295,21 +290,21 @@ contract auction {
 
 <a name="mark-untrusted-contracts"></a>
 
-#### Mark untrusted contracts
+#### 信用できないコントラクトをマークする
 
-When interacting with external contracts, name your variables, methods, and contract interfaces in a way that makes it clear that interacting with them is potentially unsafe. This applies to your own functions that call external contracts.
+外部コントラクトと対話するときは、変数、メソッド、およびコントラクト・インターフェースに、それらとのインタラクションが潜在的に危険なものであることを明確にするような名前を付けます。
 
 ```
 // bad
-Bank.withdraw(100); // Unclear whether trusted or untrusted
+Bank.withdraw(100); // 信用できるかどうかは不明
 
-function makeWithdrawal(uint amount) { // Isn't clear that this function is potentially unsafe
+function makeWithdrawal(uint amount) { // この機能が潜在的に危険であることが明らかでない
     Bank.withdraw(amount);
 }
 
 // good
-UntrustedBank.withdraw(100); // untrusted external call
-TrustedBank.withdraw(100); // external but trusted bank contract maintained by XYZ Corp
+UntrustedBank.withdraw(100); // 信用できない外部呼び出し
+TrustedBank.withdraw(100); // XYZ社によってメンテナンスされた外部の信用銀行コントラクト
 
 function makeUntrustedWithdrawal(uint amount) {
     UntrustedBank.withdraw(amount);
