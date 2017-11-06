@@ -24,7 +24,7 @@
   - [コントラクトが残高0Etherで作成されるとは限らない](#dont-assume-contracts-are-created-with-zero-balance)
   - [オンチェーンのデータはPublicであることに注意](#remember-that-on-chain-data-is-public)
   - [抽象コントラクトとインターフェースとのトレードオフに注意](#be-aware-of-the-tradeoffs-between-abstract-contracts-and-interfaces)
-  - [In 2-party or N-party contracts, beware of the possibility that some participants may "drop offline" and not return](#in-2-party-or-n-party-contracts-beware-of-the-possibility-that-some-participants-may-drop-offline-and-not-return)
+  - [複数のコントラクトを連携する場合、あるコントラクトが無反応で何もreturnしない可能性に注意](#in-2-party-or-n-party-contracts-beware-of-the-possibility-that-some-participants-may-drop-offline-and-not-return)
   - [Keep fallback functions simple](#keep-fallback-functions-simple)
   - [Explicitly mark visibility in functions and state variables](#explicitly-mark-visibility-in-functions-and-state-variables)
   - [Lock pragmas to specific compiler version](#lock-pragmas-to-specific-compiler-version)
@@ -175,9 +175,11 @@ Ethereumや複雑なブロックチェーンのプログラムは歴史が浅く
 コア・デベロッパーを通じて、ブロックチェーンに関連した広く重用なセキュリティ周りのコミュニティにリーチできるでしょう。セキュリティについての情報公開や観測状況が各所から寄せられます。
 
 
-<a name="solidity-tips"></a>
+<a name="recommendations-for-smart-contract-security-in-solidity"></a>
 
 ## Solidityにおけるスマートコントラクトセキュリティための推奨事項
+
+<a name="external-calls"></a>
 
 ### 外部呼び出し
 
@@ -406,11 +408,21 @@ uint denominator = 2;
 
 ### 抽象コントラクトとインターフェースとのトレードオフに注意
 
-抽象コントラクトとインターフェイスは、ともにスマートコントラクトの再利用性とカスタマイズ性を高めるためのアプローチです。インターフェイスはSolidity 0.4.11で実装された、抽象コントラクトに類似した概念ですが、関数を実装することができません。他にも、ストレージにアクセスできない、一般的に抽象コントラクトをより実用的にするために利用する、等の制限があります。しかしインターフェイスは、実際にコントラクトを実装する前の設計段階において有用です。またコントラクトを抽象コントラクトとするのではない限り、抽象コントラクトを実装したコントラクトは必ず未実装の関数をオーバーライドによって実装しなければならず、それを強制するためにも役立ちます。
+抽象コントラクトとインターフェイスは、ともにスマートコントラクトの再利用性とカスタマイズ性を高めるためのアプローチです。
 
-### In 2-party or N-party contracts, beware of the possibility that some participants may "drop offline" and not return
+インターフェイスはSolidity 0.4.11で実装された、抽象コントラクトに類似した概念ですが、関数を実装することができません。他にも、ストレージにアクセスできない、一般的に抽象コントラクトをより実用的にするために利用する、等の制限があります。しかしインターフェイスは、実際にコントラクトを実装する前の設計段階において有用です。
 
-Do not make refund or claim processes dependent on a specific party performing a particular action with no other way of getting the funds out. For example, in a rock-paper-scissors game, one common mistake is to not make a payout until both players submit their moves; however, a malicious player can "grief" the other by simply never submitting their move - in fact, if a player sees the other player's revealed move and determines that they lost, they have no reason to submit their own move at all. This issue may also arise in the context of state channel settlement. When such situations are an issue, (1) provide a way of circumventing non-participating participants, perhaps through a time limit, and (2) consider adding an additional economic incentive for participants to submit information in all of the situations in which they are supposed to do so.
+またコントラクトを抽象コントラクトとするのではない限り、抽象コントラクトを実装したコントラクトは必ず未実装の関数をオーバーライドによって実装しなければならず、それを強制するためにも役立ちます。
+
+<a name="in-2-party-or-n-party-contracts-beware-of-the-possibility-that-some-participants-may-drop-offline-and-not-return"></a>
+
+### 複数のコントラクトを連携する場合、あるコントラクトが無反応で何もreturnしない可能性に注意
+
+払い戻しや引き出しの実装を、特殊な処理でしか資金を引き出せないコントラクトに依存させないでください。
+
+たとえばじゃんけんゲームの場合、よくあるミスとしては両方のプレイヤーが手を出すまでは資金を引き出せない仕様とすることです。この場合、悪意のあるプレイヤーは、決して自分の手を出さないというシンプルな方法で相手の資金に打撃を与えることが可能です。実際、もし相手が先に手を出したことが確認できれば、その相手に損をさせようと意図する悪意あるプレイヤーは決して自分の手を開示しないでしょう。
+
+この問題は、状況チャネル決済のコンテキストでも発生しうるものです。それが問題となる場合の対応策としては、たとえば（1）期限を設けてその期限までに参加しなかった参加者は無効とする、または（2）参加者が参加しているすべての状況で情報を提出するよう期待されている場合、金銭的なインセンティブを加えることを検討する、などが考えられます。
 
 <a name="keep-fallback-functions-simple"></a>
 
