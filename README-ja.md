@@ -24,7 +24,7 @@
   - [コントラクトが残高0Etherで作成されるとは限らない](#dont-assume-contracts-are-created-with-zero-balance)
   - [オンチェーンのデータはPublicであることに注意](#remember-that-on-chain-data-is-public)
   - [抽象コントラクトとインターフェースとのトレードオフに注意](#be-aware-of-the-tradeoffs-between-abstract-contracts-and-interfaces)
-  - [複数のコントラクトを連携する場合、あるコントラクトが "drop offline" をして何もreturnしない可能性に注意](#in-2-party-or-n-party-contracts-beware-of-the-possibility-that-some-participants-may-drop-offline-and-not-return)
+  - [複数のコントラクトを連携する場合、あるコントラクトが無反応で何もreturnしない可能性に注意](#in-2-party-or-n-party-contracts-beware-of-the-possibility-that-some-participants-may-drop-offline-and-not-return)
   - [Keep fallback functions simple](#keep-fallback-functions-simple)
   - [Explicitly mark visibility in functions and state variables](#explicitly-mark-visibility-in-functions-and-state-variables)
   - [Lock pragmas to specific compiler version](#lock-pragmas-to-specific-compiler-version)
@@ -410,13 +410,10 @@ uint denominator = 2;
 
 <a name="in-2-party-or-n-party-contracts-beware-of-the-possibility-that-some-participants-may-drop-offline-and-not-return"></a>
 
-### 複数のコントラクトを連携する場合、あるコントラクトが "drop offline" をして何もreturnしない可能性に注意
+### 複数のコントラクトを連携する場合、あるコントラクトが無反応で何もreturnしない可能性に注意
 
-払い戻しや引き出しの実装を、特殊な処理でしか資金を引き出せないコントラクトに依存させないでください。たとえばじゃんけんゲームの場合、よくあるミスとしては両方のプレイヤーが手を出すまでは資金を引き出せない仕様とすることです。この場合、悪意のあるプレイヤーは、決して自分の手を出さないというシンプルな方法で相手の資金に打撃を与えることが可能です。実際、もし相手が先に手を出したことを確認した後に彼に損をさせようと意図した場合、悪意あるプレイヤーが自分の手を開示する理由はまったくありません。  
-
-この問題は国家の入植についてのコンテクストでも起こり得ます。  
-1. 参加者に参加しないという選択肢を与えると、おそらくタイムリミットまで参加しないでしょう
-1. 参加者がすべきすべてのシチュエーションについて、さらなる報酬を追加することを検討します
+払い戻しや引き出しの実装を、特殊な処理でしか資金を引き出せないコントラクトに依存させないでください。たとえばじゃんけんゲームの場合、よくあるミスとしては両方のプレイヤーが手を出すまでは資金を引き出せない仕様とすることです。この場合、悪意のあるプレイヤーは、決して自分の手を出さないというシンプルな方法で相手の資金に打撃を与えることが可能です。実際、もし相手が先に手を出したことが確認できれば、その相手に損をさせようと意図する悪意あるプレイヤーは決して自分の手を開示しないでしょう。  
+この問題は、状況チャネル決済のコンテキストでも発生しうるものです。それが問題となる場合は、たとえば（1）期限を設けてその期限までに参加しなかった参加者は無効とする、または（2）参加者が参加しているすべての状況で情報を提出するよう期待されている場合、金銭的なインセンティブを加えることを検討する、などが考えられます。
 
 <a name="keep-fallback-functions-simple"></a>
 
