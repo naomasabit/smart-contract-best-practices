@@ -25,7 +25,7 @@
   - [オンチェーンのデータはPublicであることに注意](#remember-that-on-chain-data-is-public)
   - [抽象コントラクトとインターフェースとのトレードオフに注意](#be-aware-of-the-tradeoffs-between-abstract-contracts-and-interfaces)
   - [複数のコントラクトを連携する場合、あるコントラクトが無反応で何もreturnしない可能性に注意](#in-2-party-or-n-party-contracts-beware-of-the-possibility-that-some-participants-may-drop-offline-and-not-return)
-  - [Keep fallback functions simple](#keep-fallback-functions-simple)
+  - [fallback functionsはシンプルに保つ](#keep-fallback-functions-simple)
   - [Explicitly mark visibility in functions and state variables](#explicitly-mark-visibility-in-functions-and-state-variables)
   - [Lock pragmas to specific compiler version](#lock-pragmas-to-specific-compiler-version)
   - [Beware division by zero \(Solidity < 0.4\)](#beware-division-by-zero-solidity--04)
@@ -426,9 +426,11 @@ uint denominator = 2;
 
 <a name="keep-fallback-functions-simple"></a>
 
-### Keep fallback functions simple
+### fallback functionsはシンプルに保つ
 
-[Fallback functions](http://solidity.readthedocs.io/en/latest/contracts.html#fallback-function) are called when a contract is sent a message with no arguments (or when no function matches), and only has access to 2,300 gas when called from a `.send()` or `.transfer()`. If you wish to be able to receive Ether from a `.send()` or `.transfer()`, the most you can do in a fallback function is log an event. Use a proper function if a computation or more gas is required.
+[Fallback functions](http://solidity.readthedocs.io/en/latest/contracts.html#fallback-function)は引数無しでメッセージを送られた場合(あるいはfunctionが存在しない場合)にコールされ、`.send()`や`.transfer()`からコールされた場合は2,300程度のガスしか使用できません。
+
+もし`.send()`や`.transfer()`からEtherを受け取りたい場合、fallback functionで実装可能な処理はイベントのログを取る程度です。より多くのコンピューティングやガスが必要な処理の場合、別の関数を定義してそれを呼び出してください。
 
 ```
 // bad
