@@ -26,7 +26,7 @@
   - [抽象コントラクトとインターフェースとのトレードオフに注意](#be-aware-of-the-tradeoffs-between-abstract-contracts-and-interfaces)
   - [複数のコントラクトを連携する場合、あるコントラクトが無反応で何もreturnしない可能性に注意](#in-2-party-or-n-party-contracts-beware-of-the-possibility-that-some-participants-may-drop-offline-and-not-return)
   - [fallback functionsはシンプルに保つ](#keep-fallback-functions-simple)
-  - [Explicitly mark visibility in functions and state variables](#explicitly-mark-visibility-in-functions-and-state-variables)
+  - [関数と変数のスコープは明示的に宣言する](#explicitly-mark-visibility-in-functions-and-state-variables)
   - [Lock pragmas to specific compiler version](#lock-pragmas-to-specific-compiler-version)
   - [Beware division by zero \(Solidity < 0.4\)](#beware-division-by-zero-solidity--04)
   - [Differentiate functions and events](#differentiate-functions-and-events)
@@ -442,31 +442,33 @@ function deposit() payable external { balances[msg.sender] += msg.value; }
 function() payable { LogDepositReceived(msg.sender); }
 ```
 
-<a name="mark-visibility"></a>
+<a name="explicitly-mark-visibility-in-functions-and-state-variables"></a>
 
-### Explicitly mark visibility in functions and state variables
+### 関数と変数のスコープは明示的に宣言する
 
-Explicitly label the visibility of functions and state variables. Functions can be specified as being `external`, `public`, `internal` or `private`. Please understand the differences between them, for example `external` may be sufficient instead of `public`. For state variables, `external` is not possible. Labeling the visibility explicitly will make it easier to catch incorrect assumptions about who can call the function or access the variable.
+関数と変数のスコープは明示的に宣言しましょう。関数は宣言時に `external`, `public`, `internal`, または `private` を指定できます。これらの違いを理解してください。
+
+たとえば、多くの場面では `public` ではなく `external` で充分でしょう。変数には `external` は使用できません。スコープを明示的にすることで、不適切なユーザが変数にアクセスしたり関数をコールできてしまうという問題をより容易に把握できます。
 
 ```
 // bad
-uint x; // the default is private for state variables, but it should be made explicit
-function buy() { // the default is public
+uint x; // デフォルトは private ですが、それでも明示すべきです
+function buy() { // デフォルトは public となります
     // public code
 }
 
 // good
 uint private y;
 function buy() external {
-    // only callable externally
+    // 外部からしかコールできません
 }
 
 function utility() public {
-    // callable externally, as well as internally: changing this code requires thinking about both cases.
+    // 外部からも内部からもコールできます。このコードを変更する場合、そのどちらの側面も考慮する必要があります
 }
 
 function internalAction() internal {
-    // internal code
+    // 内部からしかコールできません
 }
 ```
 
