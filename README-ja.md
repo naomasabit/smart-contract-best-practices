@@ -28,7 +28,7 @@
   - [fallback functionsはシンプルに保つ](#keep-fallback-functions-simple)
   - [関数と変数のスコープは明示的に宣言する](#explicitly-mark-visibility-in-functions-and-state-variables)
   - [Lock pragmas to specific compiler version](#lock-pragmas-to-specific-compiler-version)
-  - [Beware division by zero \(Solidity < 0.4\)](#beware-division-by-zero-solidity--04)
+  - [ゼロ除算に注意 \(Solidity < 0.4\)](#beware-division-by-zero-solidity--04)
   - [Differentiate functions and events](#differentiate-functions-and-events)
   - [Prefer newer Solidity constructs](#prefer-newer-solidity-constructs)
 - [Known Attacks](#known-attacks)
@@ -489,9 +489,10 @@ pragma solidity 0.4.4;
 
 <a name="beware-division-by-zero"></a>
 
-### Beware division by zero (Solidity < 0.4)
+### ゼロ除算に注意 (Solidity < 0.4)
 
-Prior to version 0.4, Solidity [returns zero](https://github.com/ethereum/solidity/issues/670) and does not `throw` an exception when a number is divided by zero. Ensure you're running at least version 0.4.
+0.4より前のバージョンでは、Solidityはゼロを返し、数値をゼロで割ったときに例外をスローしません。
+バージョン0.4以上で動作していることを確認してください。
 
 <a name="differentiate-functions-events"></a>
 
