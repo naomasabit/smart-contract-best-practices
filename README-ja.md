@@ -29,7 +29,7 @@
   - [関数と変数のスコープは明示的に宣言する](#explicitly-mark-visibility-in-functions-and-state-variables)
   - [pragmaを特定のコンパイラのバージョンにロックする](#lock-pragmas-to-specific-compiler-version)
   - [Beware division by zero \(Solidity < 0.4\)](#beware-division-by-zero-solidity--04)
-  - [Differentiate functions and events](#differentiate-functions-and-events)
+  - [関数とイベントを区別する](#differentiate-functions-and-events)
   - [Prefer newer Solidity constructs](#prefer-newer-solidity-constructs)
 - [Known Attacks](#known-attacks)
   - [Race Conditions\*](#race-conditions%5C)
@@ -497,9 +497,10 @@ Prior to version 0.4, Solidity [returns zero](https://github.com/ethereum/solidi
 
 <a name="differentiate-functions-events"></a>
 
-### Differentiate functions and events
+### 関数とイベントを区別する
 
-Favor capitalization and a prefix in front of events (we suggest *Log*), to prevent the risk of confusion between functions and events. For functions, always start with a lowercase letter, except for the constructor.
+関数とイベントの混乱の危険を避けるため、先頭を大文字にしてイベントの前に接頭辞を付ける（*Log* を提案する）。
+関数の場合は、コンストラクタを除き、常に小文字で始まります。
 
 ```
 // bad
