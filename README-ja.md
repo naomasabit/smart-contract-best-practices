@@ -27,7 +27,7 @@
   - [複数のコントラクトを連携する場合、あるコントラクトが無反応で何もreturnしない可能性に注意](#in-2-party-or-n-party-contracts-beware-of-the-possibility-that-some-participants-may-drop-offline-and-not-return)
   - [fallback functionsはシンプルに保つ](#keep-fallback-functions-simple)
   - [関数と変数のスコープは明示的に宣言する](#explicitly-mark-visibility-in-functions-and-state-variables)
-  - [Lock pragmas to specific compiler version](#lock-pragmas-to-specific-compiler-version)
+  - [pragmaを特定のコンパイラのバージョンにロックする](#lock-pragmas-to-specific-compiler-version)
   - [Beware division by zero \(Solidity < 0.4\)](#beware-division-by-zero-solidity--04)
   - [Differentiate functions and events](#differentiate-functions-and-events)
   - [Prefer newer Solidity constructs](#prefer-newer-solidity-constructs)
@@ -474,9 +474,11 @@ function internalAction() internal {
 
 <a name="lock-pragmas"></a>
 
-### Lock pragmas to specific compiler version
+### pragmaを特定のコンパイラのバージョンにロックする
 
-Contracts should be deployed with the same compiler version and flags that they have been tested the most with. Locking the pragma helps ensure that contracts do not accidentally get deployed using, for example, the latest compiler which may have higher risks of undiscovered bugs. Contracts may also be deployed by others and the pragma indicates the compiler version intended by the original authors.
+コントラクトは、最もよくテストされたものと同じコンパイラ・バージョンとフラグでデプロイする必要があります。
+pragmaをロックすると、未知のバグのリスクがより高い最新のコンパイラなどを使用して、コントラクトが誤って展開されないようになります。
+コントラクトは他の人によっても展開される可能性があり、pragmaは元の著者が意図したコンパイラのバージョンを示します。
 
 ```
 // bad
