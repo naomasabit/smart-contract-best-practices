@@ -30,7 +30,7 @@
   - [pragmaを特定のコンパイラのバージョンにロックする](#lock-pragmas-to-specific-compiler-version)
   - [ゼロ除算に注意 \(Solidity < 0.4\)](#beware-division-by-zero-solidity--04)
   - [関数とイベントを区別する](#differentiate-functions-and-events)
-  - [Prefer newer Solidity constructs](#prefer-newer-solidity-constructs)
+  - [より新しいSolidity構文を好む](#prefer-newer-solidity-constructs)
 - [Known Attacks](#known-attacks)
   - [Race Conditions\*](#race-conditions%5C)
   - [Transaction-Ordering Dependence \(TOD\) / Front Running](#transaction-ordering-dependence-tod--front-running)
@@ -515,9 +515,10 @@ function transfer() external {}
 
 <a name="prefer-newer-constructs"></a>
 
-### Prefer newer Solidity constructs
+### より新しいSolidity構文を好む
 
-Prefer constructs/aliases such as `selfdestruct` (over `suicide`) and `keccak256` (over `sha3`).  Patterns like `require(msg.sender.send(1 ether))` can also be simplified to using `transfer()`, as in `msg.sender.transfer(1 ether)`.
+`selfdestruct`（`suicide`より新しい）と `keccak256`（`sha3`より新しい）のような構文/エイリアスを好みます。
+`require（msg.sender.send（1 ether））`のようなパターンは `msg.sender.transfer（1 ether）`のように `transfer（）`を使って単純化することもできます。
 
 <a name="known-attacks"></a>
 
