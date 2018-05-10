@@ -528,16 +528,12 @@ function transfer() external {}
 
 ### Race Conditions（競争条件）<sup><a href='#footnote-race-condition-terminology'>\*</a></sup>
 
-One of the major dangers of calling external contracts is that they can take over the control flow, and make changes to your data that the calling function wasn't expecting. This class of bug can take many forms, and both of the major bugs that led to the DAO's collapse were bugs of this sort.
-
 コントラクトの外部呼び出し時の主要な危険の1つは、処理フローを引き継ぎ、呼び出し元の関数が予測しなかったデータに変更することです。 このタイプのバグはいろいろなパターンを取ることができ、DAOの崩壊につながった主要なバグの両方ともこの種のバグでした。
 
 
 <a name="reentrancy"></a>
 
 #### Reentrancy（再入国）
-
-The first version of this bug to be noticed involved functions that could be called repeatedly, before the first invocation of the function was finished. This may cause the different invocations of the function to interact in destructive ways.
 
 このバグの最初のバージョンは、関数の最初の呼び出しが終了する前に、繰り返し呼び出される可能性のある関数が含まれていました。
 関数のさまざまな呼び出しが破壊的に相互作用する可能性があります。
