@@ -30,9 +30,9 @@
   - [pragmaを特定のコンパイラのバージョンにロックする](#lock-pragmas-to-specific-compiler-version)
   - [ゼロ除算に注意 \(Solidity < 0.4\)](#beware-division-by-zero-solidity--04)
   - [関数とイベントを区別する](#differentiate-functions-and-events)
-  - [Prefer newer Solidity constructs](#prefer-newer-solidity-constructs)
+  - [より新しいSolidity構文を好む](#prefer-newer-solidity-constructs)
 - [Known Attacks](#known-attacks)
-  - [Race Conditions\*](#race-conditions%5C)
+  - [Race Conditions（競争条件）\*](#race-conditions%5C)
   - [Transaction-Ordering Dependence \(TOD\) / Front Running](#transaction-ordering-dependence-tod--front-running)
   - [Timestamp Dependence](#timestamp-dependence)
   - [Integer Overflow and Underflow](#integer-overflow-and-underflow)
@@ -515,9 +515,10 @@ function transfer() external {}
 
 <a name="prefer-newer-constructs"></a>
 
-### Prefer newer Solidity constructs
+### より新しいSolidity構文を好む
 
-Prefer constructs/aliases such as `selfdestruct` (over `suicide`) and `keccak256` (over `sha3`).  Patterns like `require(msg.sender.send(1 ether))` can also be simplified to using `transfer()`, as in `msg.sender.transfer(1 ether)`.
+`selfdestruct`（`suicide`より新しい）と `keccak256`（`sha3`より新しい）のような構文/エイリアスを好みます。
+`require（msg.sender.send（1 ether））`のようなパターンは `msg.sender.transfer（1 ether）`のように `transfer（）`を使って単純化することもできます。
 
 <a name="known-attacks"></a>
 
@@ -525,15 +526,22 @@ Prefer constructs/aliases such as `selfdestruct` (over `suicide`) and `keccak256
 
 <a name="race-conditions"></a>
 
-### Race Conditions<sup><a href='#footnote-race-condition-terminology'>\*</a></sup>
+### Race Conditions（競争条件）<sup><a href='#footnote-race-condition-terminology'>\*</a></sup>
 
 One of the major dangers of calling external contracts is that they can take over the control flow, and make changes to your data that the calling function wasn't expecting. This class of bug can take many forms, and both of the major bugs that led to the DAO's collapse were bugs of this sort.
 
+コントラクトの外部呼び出し時の主要な危険の1つは、処理フローを引き継ぎ、呼び出し元の関数が予測しなかったデータに変更することです。 このタイプのバグはいろいろなパターンを取ることができ、DAOの崩壊につながった主要なバグの両方ともこの種のバグでした。
+
+
 <a name="reentrancy"></a>
 
-#### Reentrancy
+#### Reentrancy（再入国）
 
 The first version of this bug to be noticed involved functions that could be called repeatedly, before the first invocation of the function was finished. This may cause the different invocations of the function to interact in destructive ways.
+
+このバグの最初のバージョンは、関数の最初の呼び出しが終了する前に、繰り返し呼び出される可能性のある関数が含まれていました。
+関数のさまざまな呼び出しが破壊的に相互作用する可能性があります。
+
 
 ```
 // INSECURE
@@ -541,16 +549,17 @@ mapping (address => uint) private userBalances;
 
 function withdrawBalance() public {
     uint amountToWithdraw = userBalances[msg.sender];
-    require(msg.sender.call.value(amountToWithdraw)()); // At this point, the caller's code is executed, and can call withdrawBalance again
+    require(msg.sender.call.value(amountToWithdraw)()); // ここで、呼び出し者のコードを実行する事で、複数回残高引出しが行う事が可能である
     userBalances[msg.sender] = 0;
 }
 ```
 
-Since the user's balance is not set to 0 until the very end of the function, the second (and later) invocations will still succeed, and will withdraw the balance over and over again. A very similar bug was one of the vulnerabilities in the DAO attack.
+関数の最後までユーザーの残高が0に設定されないため、2回目以降の呼び出しは引き続き成功し、何度も何度も残高を引き出します。 非常によく似たバグが、DAO攻撃の脆弱性の1つでした。
 
-In the example given, the best way to avoid the problem is to [use `send()` instead of `call.value()()`](https://github.com/ConsenSys/smart-contract-best-practices#send-vs-call-value). This will prevent any external code from being executed.
+与えられた例において、問題を避ける最良の方法は[`call.value()()`を使うのではなく、`send()`を使うことです。](https://github.com/ConsenSys/smart-contract-best-practices#send-vs-call-value)
+`send()`によって実行される前にコードの外部呼び出しを避けることができます。
 
-However, if you can't remove the external call, the next simplest way to prevent this attack is to make sure you don't call an external function until you've done all the internal work you need to do:
+しかし、外部呼び出しを避けられない場合、この攻撃を防ぐための、次に最も簡単な方法は、必要な内部の処理がすべて完了するまで外部の関数を呼び出さないようにすることです。
 
 ```
 mapping (address => uint) private userBalances;
@@ -558,11 +567,11 @@ mapping (address => uint) private userBalances;
 function withdrawBalance() public {
     uint amountToWithdraw = userBalances[msg.sender];
     userBalances[msg.sender] = 0;
-    require(msg.sender.call.value(amountToWithdraw)()); // The user's balance is already 0, so future invocations won't withdraw anything
+    require(msg.sender.call.value(amountToWithdraw)()); // ユーザー残高はすでに0のため、次の呼び出しは全く何も引き出しを行わない
 }
 ```
 
-Note that if you had another function which called `withdrawBalance()`, it would be potentially subject to the same attack, so you must treat any function which calls an untrusted contract as itself untrusted. See below for further discussion of potential solutions.
+`withdrawBalance（）`と呼ばれる別の関数があった場合、それは潜在的に同じ攻撃の対象となります。そのため、信頼できない契約を呼び出す関数を信頼できないものとして扱わなければなりません。 潜在的な解決策の詳細については、以下を参照してください。
 
 #### Cross-function Race Conditions
 
